@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">studysync</string>
+    <string name="login_title">Login</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="login_button_text">Login</string>
+    <string name="register_prompt">Don\'t have an account? Register</string>
+    <string name="welcome_message">Welcome, %1$s</string>
+    <string name="study_room_toast">Opening Study Room Module</string>
+    <string name="pomodoro_toast">Opening Pomodoro Timer</string>
+    <string name="chat_toast">Opening Group Chat</string>
+    <string name="notes_toast">Opening Notes Sharing</string>
+    <string name="tasks_toast">Opening Task Tracker</string>
+    <string name="logout_toast">Logged out successfully</string>
+    <!-- ... other strings ... -->
+    <string name="join_or_create_a_room">Join or Create a Room</string>
+    <string name="enter_room_code">Enter Room Code</string>
+    <string name="join_room">Join Room</string>
+    <string name="or">OR</string>
+    <string name="create_a_new_room">Create a New Room</string>
+</resources>

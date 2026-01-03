@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Room Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvRoomCode"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Room: ABC123"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#2C3E50"/>
+
+            <TextView
+                android:id="@+id/tvHostBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👑 HOST"
+                android:textSize="12sp"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/host_badge_background"
+                android:padding="6dp"
+                android:visibility="gone"/>
+
+        </LinearLayout>
+
+        <!-- Room Info -->
+        <TextView
+            android:id="@+id/tvMemberCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="👥 5 members"
+            android:textSize="14sp"
+            android:textColor="#7F8C8D"
+            android:layout_marginTop="8dp"/>
+
+        <TextView
+            android:id="@+id/tvCreatedDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Created: Jan 01, 2024"
+            android:textSize="12sp"
+            android:textColor="#95A5A6"
+            android:layout_marginTop="4dp"/>
+
+        <!-- Delete Button (Only for Host) -->
+        <Button
+            android:id="@+id/btnDeleteRoom"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:text="🗑️ Delete Room"
+            android:textSize="14sp"
+            android:backgroundTint="#E74C3C"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"/>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
