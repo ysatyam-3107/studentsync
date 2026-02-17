@@ -8,17 +8,21 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.cloudinary.android.MediaManager;
+import com.cloudinary.android.callback.ErrorInfo;
+import com.cloudinary.android.callback.UploadCallback;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.*;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,30 +31,35 @@ import java.util.Map;
 
 public class NotesActivity extends AppCompatActivity {
 
+    private static final String TAG = "NotesActivity";
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+    private RecyclerView rvNotes;
     private Button btnUploadNote;
     private ProgressBar progressBar;
 
     private NotesAdapter notesAdapter;
     private List<Note> notesList;
 
+    private String roomCode;
     private DatabaseReference notesRef;
-    private StorageReference storageRef;
     private FirebaseAuth auth;
 
-    private ActivityResultLauncher<String> filePickerLauncher;
+    private ActivityResultLauncher<Intent> filePickerLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notes);
 
-        // Initialize views
-        RecyclerView rvNotes = findViewById(R.id.rvNotes);
+        // ✅ Initialize Cloudinary
+        initCloudinary();
+
+        rvNotes = findViewById(R.id.rvNotes);
         btnUploadNote = findViewById(R.id.btnUploadNote);
         progressBar = findViewById(R.id.progressBarNotes);
 
-        // Get room code
-        String roomCode = getIntent().getStringExtra("roomCode");
+        roomCode = getIntent().getStringExtra("roomCode");
         auth = FirebaseAuth.getInstance();
 
         if (roomCode == null || auth.getCurrentUser() == null) {
@@ -59,44 +68,89 @@ public class NotesActivity extends AppCompatActivity {
             return;
         }
 
-        // Firebase references
         notesRef = FirebaseDatabase.getInstance()
                 .getReference("Notes").child(roomCode);
-        storageRef = FirebaseStorage.getInstance()
-                .getReference("notes").child(roomCode);
 
-        // Setup RecyclerView
         notesList = new ArrayList<>();
-        notesAdapter = new NotesAdapter(this, notesList, new NotesAdapter.OnNoteClickListener() {
-            @Override
-            public void onDownloadClick(Note note) {
-                downloadNote(note);
-            }
+        notesAdapter = new NotesAdapter(this, notesList,
+                new NotesAdapter.OnNoteClickListener() {
+                    @Override
+                    public void onDownloadClick(Note note) {
+                        downloadNote(note);
+                    }
 
-            @Override
-            public void onDeleteClick(Note note) {
-                deleteNote(note);
-            }
-        });
+                    @Override
+                    public void onDeleteClick(Note note) {
+                        deleteNote(note);
+                    }
+                });
 
         rvNotes.setLayoutManager(new LinearLayoutManager(this));
         rvNotes.setAdapter(notesAdapter);
 
-        // File picker launcher
         filePickerLauncher = registerForActivityResult(
-                new ActivityResultContracts.GetContent(),
-                uri -> {
-                    if (uri != null) {
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK &&
+                            result.getData() != null &&
+                            result.getData().getData() != null) {
+
+                        Uri uri = result.getData().getData();
+
+                        try {
+                            getContentResolver().takePersistableUriPermission(
+                                    uri,
+                                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            );
+                        } catch (SecurityException e) {
+                            Log.w(TAG, "Could not persist URI permission", e);
+                        }
+
                         uploadFile(uri);
                     }
                 }
         );
 
-        // Load notes
         loadNotes();
 
-        // Upload button
-        btnUploadNote.setOnClickListener(v -> filePickerLauncher.launch("*/*"));
+        btnUploadNote.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.setType("*/*");
+            intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
+                    "application/pdf",
+                    "application/msword",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "text/plain",
+                    "image/*"
+            });
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            filePickerLauncher.launch(intent);
+        });
+    }
+
+    /**
+     * Initialize Cloudinary with your credentials
+     */
+    /**
+     * Initialize Cloudinary with your credentials
+     */
+    private void initCloudinary() {
+        Map<String, String> config = new HashMap<>();
+        config.put("cloud_name", CloudinaryConfig.CLOUD_NAME);
+        config.put("api_key", CloudinaryConfig.API_KEY);
+        config.put("api_secret", CloudinaryConfig.API_SECRET);
+
+        try {
+            MediaManager.init(this, config);
+            Log.d(TAG, "✅ Cloudinary initialized successfully");
+            Log.d(TAG, "Cloud Name: " + CloudinaryConfig.CLOUD_NAME);
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Cloudinary initialization failed", e);
+            Toast.makeText(this,
+                    "Cloud storage setup failed: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
+        }
     }
 
     private void loadNotes() {
@@ -104,10 +158,10 @@ public class NotesActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 notesList.clear();
-                for (DataSnapshot noteSnap : snapshot.getChildren()) {
-                    Note note = noteSnap.getValue(Note.class);
+                for (DataSnapshot snap : snapshot.getChildren()) {
+                    Note note = snap.getValue(Note.class);
                     if (note != null) {
-                        note.setId(noteSnap.getKey());
+                        note.setId(snap.getKey());
                         notesList.add(note);
                     }
                 }
@@ -116,78 +170,178 @@ public class NotesActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Failed to load notes", error.toException());
                 Toast.makeText(NotesActivity.this,
-                        "Failed to load notes", Toast.LENGTH_SHORT).show();
+                        "Failed to load notes: " + error.getMessage(),
+                        Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void uploadFile(Uri fileUri) {
+        Log.d(TAG, "=== STARTING CLOUDINARY UPLOAD ===");
+
+        // Validate file size
+        long fileSize = getFileSize(fileUri);
+        Log.d(TAG, "File size: " + fileSize + " bytes");
+
+        if (fileSize > MAX_FILE_SIZE) {
+            Toast.makeText(this,
+                    "File too large. Maximum size is 10MB",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (fileSize == -1) {
+            Toast.makeText(this,
+                    "Could not read file. Please try again",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         progressBar.setVisibility(View.VISIBLE);
         btnUploadNote.setEnabled(false);
 
-        String fileName = getFileName(fileUri);
+        String tempFileName = getFileName(fileUri);
+        final String fileName = (tempFileName != null)
+                ? tempFileName
+                : "file_" + System.currentTimeMillis();
+
+        Log.d(TAG, "File name: " + fileName);
+
         String noteId = notesRef.push().getKey();
-        if (noteId == null) return;
+        if (noteId == null) {
+            progressBar.setVisibility(View.GONE);
+            btnUploadNote.setEnabled(true);
+            Toast.makeText(this, "Failed to generate note ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        StorageReference fileRef = storageRef.child(noteId + "_" + fileName);
+        String fileType = detectFileType(fileUri, fileName);
+        Log.d(TAG, "File type: " + fileType);
 
-        fileRef.putFile(fileUri)
-                .addOnSuccessListener(taskSnapshot -> fileRef.getDownloadUrl()
-                        .addOnSuccessListener(downloadUri -> {
-                            saveNoteToDatabase(noteId, fileName, downloadUri.toString());
-                        })
-                        .addOnFailureListener(e -> {
+        // Upload to Cloudinary
+        String folderPath = "studysync/" + roomCode;
+
+        MediaManager.get().upload(fileUri)
+                .option("resource_type", "auto")  // Auto-detect file type
+                .option("folder", folderPath)     // Organize by room
+                .option("public_id", noteId + "_" + getFileNameWithoutExtension(fileName))
+                .callback(new UploadCallback() {
+                    @Override
+                    public void onStart(String requestId) {
+                        Log.d(TAG, "Upload started - Request ID: " + requestId);
+                        runOnUiThread(() ->
+                                Toast.makeText(NotesActivity.this,
+                                        "Uploading...", Toast.LENGTH_SHORT).show()
+                        );
+                    }
+
+                    @Override
+                    public void onProgress(String requestId, long bytes, long totalBytes) {
+                        int progress = (int) ((bytes * 100) / totalBytes);
+                        Log.d(TAG, "Upload progress: " + progress + "%");
+                    }
+
+                    @Override
+                    public void onSuccess(String requestId, Map resultData) {
+                        String fileUrl = (String) resultData.get("secure_url");
+                        Log.d(TAG, "✅ Upload successful! URL: " + fileUrl);
+
+                        runOnUiThread(() ->
+                                saveNoteToDatabase(noteId, fileName, fileUrl, fileType)
+                        );
+                    }
+
+                    @Override
+                    public void onError(String requestId, ErrorInfo error) {
+                        Log.e(TAG, "❌ Upload error: " + error.getDescription());
+
+                        runOnUiThread(() -> {
                             progressBar.setVisibility(View.GONE);
                             btnUploadNote.setEnabled(true);
-                            Toast.makeText(this, "Failed to get download URL",
-                                    Toast.LENGTH_SHORT).show();
-                        }))
-                .addOnFailureListener(e -> {
-                    progressBar.setVisibility(View.GONE);
-                    btnUploadNote.setEnabled(true);
-                    Toast.makeText(this, "Upload failed: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
+                            Toast.makeText(NotesActivity.this,
+                                    "Upload failed: " + error.getDescription(),
+                                    Toast.LENGTH_LONG).show();
+                        });
+                    }
+
+                    @Override
+                    public void onReschedule(String requestId, ErrorInfo error) {
+                        Log.w(TAG, "Upload rescheduled: " + error.getDescription());
+                    }
+                })
+                .dispatch();
     }
 
-    private void saveNoteToDatabase(String noteId, String fileName, String fileUrl) {
+    private void saveNoteToDatabase(String noteId, String fileName,
+                                    String fileUrl, String fileType) {
+        Log.d(TAG, "=== SAVING TO DATABASE ===");
+
         String uploaderId = auth.getCurrentUser().getUid();
-        String uploaderName = auth.getCurrentUser().getEmail();
+        DatabaseReference userRef = FirebaseDatabase.getInstance()
+                .getReference("Users").child(uploaderId);
 
-        Map<String, Object> noteData = new HashMap<>();
-        noteData.put("fileName", fileName);
-        noteData.put("fileUrl", fileUrl);
-        noteData.put("uploaderId", uploaderId);
-        noteData.put("uploaderName", uploaderName);
-        noteData.put("uploadedAt", ServerValue.TIMESTAMP);
-        noteData.put("fileType", getFileType(fileName));
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String uploaderName = snapshot.child("name").getValue(String.class);
+                if (uploaderName == null) uploaderName = "User";
 
-        notesRef.child(noteId).setValue(noteData)
-                .addOnSuccessListener(aVoid -> {
-                    progressBar.setVisibility(View.GONE);
-                    btnUploadNote.setEnabled(true);
-                    Toast.makeText(this, "Note uploaded successfully",
-                            Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    progressBar.setVisibility(View.GONE);
-                    btnUploadNote.setEnabled(true);
-                    Toast.makeText(this, "Failed to save note info",
-                            Toast.LENGTH_SHORT).show();
-                });
+                Map<String, Object> data = new HashMap<>();
+                data.put("fileName", fileName);
+                data.put("fileUrl", fileUrl);
+                data.put("uploaderId", uploaderId);
+                data.put("uploaderName", uploaderName);
+                data.put("uploadedAt", ServerValue.TIMESTAMP);
+                data.put("fileType", fileType);
+
+                notesRef.child(noteId).setValue(data)
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d(TAG, "✅ Note saved to database");
+                            progressBar.setVisibility(View.GONE);
+                            btnUploadNote.setEnabled(true);
+                            Toast.makeText(NotesActivity.this,
+                                    "Note uploaded successfully!",
+                                    Toast.LENGTH_SHORT).show();
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e(TAG, "❌ Database save failed", e);
+                            progressBar.setVisibility(View.GONE);
+                            btnUploadNote.setEnabled(true);
+                            Toast.makeText(NotesActivity.this,
+                                    "Failed to save: " + e.getMessage(),
+                                    Toast.LENGTH_LONG).show();
+                        });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "❌ Failed to get user info", error.toException());
+                progressBar.setVisibility(View.GONE);
+                btnUploadNote.setEnabled(true);
+            }
+        });
     }
 
     private void downloadNote(Note note) {
-        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(note.getFileUrl()));
-        startActivity(browserIntent);
-        Toast.makeText(this, "Opening " + note.getFileName(), Toast.LENGTH_SHORT).show();
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse(note.getFileUrl()));
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(intent);
+        } catch (Exception e) {
+            Log.e(TAG, "Download error", e);
+            Toast.makeText(this,
+                    "Cannot open file: " + e.getMessage(),
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void deleteNote(Note note) {
-        // Only uploader can delete
         if (!note.getUploaderId().equals(auth.getCurrentUser().getUid())) {
-            Toast.makeText(this, "Only uploader can delete this note",
+            Toast.makeText(this,
+                    "Only uploader can delete",
                     Toast.LENGTH_SHORT).show();
             return;
         }
@@ -195,35 +349,87 @@ public class NotesActivity extends AppCompatActivity {
         // Delete from database
         notesRef.child(note.getId()).removeValue()
                 .addOnSuccessListener(aVoid -> {
-                    // Delete from storage
-                    String fileName = note.getId() + "_" + note.getFileName();
-                    storageRef.child(fileName).delete();
-                    Toast.makeText(this, "Note deleted", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this,
+                            "Note deleted successfully",
+                            Toast.LENGTH_SHORT).show();
+
+                    // Note: Cloudinary file deletion requires admin API
+                    // For now, files remain in Cloudinary (won't affect functionality)
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this,
+                            "Failed to delete: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                });
     }
 
     private String getFileName(Uri uri) {
-        String path = uri.getPath();
-        if (path != null) {
-            int index = path.lastIndexOf('/');
-            if (index != -1) {
-                return path.substring(index + 1);
+        try (Cursor cursor = getContentResolver().query(
+                uri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (nameIndex != -1) {
+                    return cursor.getString(nameIndex);
+                }
             }
+        } catch (Exception e) {
+            Log.e(TAG, "File name error", e);
         }
-        return "file_" + System.currentTimeMillis();
+        return null;
     }
 
-    private String getFileType(String fileName) {
-        if (fileName.toLowerCase().endsWith(".pdf")) {
-            return "pdf";
-        } else if (fileName.toLowerCase().endsWith(".txt")) {
-            return "text";
-        } else if (fileName.toLowerCase().endsWith(".doc") ||
-                fileName.toLowerCase().endsWith(".docx")) {
-            return "doc";
+    private String getFileNameWithoutExtension(String fileName) {
+        if (fileName == null) return "file";
+        int lastDot = fileName.lastIndexOf('.');
+        return (lastDot > 0) ? fileName.substring(0, lastDot) : fileName;
+    }
+
+    private long getFileSize(Uri uri) {
+        try (Cursor cursor = getContentResolver().query(
+                uri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
+                if (sizeIndex != -1) {
+                    return cursor.getLong(sizeIndex);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "File size error", e);
         }
+        return -1;
+    }
+
+    private String detectFileType(Uri uri, String fileName) {
+        String mimeType = getContentResolver().getType(uri);
+
+        if (mimeType != null) {
+            if (mimeType.contains("pdf")) return "pdf";
+            else if (mimeType.contains("text")) return "text";
+            else if (mimeType.contains("word") || mimeType.contains("document")) return "document";
+            else if (mimeType.contains("image")) return "image";
+        }
+
+        if (fileName != null) {
+            String extension = "";
+            int lastDot = fileName.lastIndexOf('.');
+            if (lastDot > 0) {
+                extension = fileName.substring(lastDot + 1).toLowerCase();
+            }
+
+            switch (extension) {
+                case "pdf": return "pdf";
+                case "txt":
+                case "text": return "text";
+                case "doc":
+                case "docx": return "document";
+                case "jpg":
+                case "jpeg":
+                case "png":
+                case "gif": return "image";
+                default: return "other";
+            }
+        }
+
         return "other";
     }
 }

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000">
+
+    <!-- Video Surface -->
+    <FrameLayout
+        android:id="@+id/videoSurface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Avatar when video off -->
+    <ImageView
+        android:id="@+id/imgAvatar"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_gravity="center"
+        android:src="@android:drawable/sym_def_app_icon"
+        android:visibility="gone"
+        android:contentDescription="@string/profile_avatar"/>
+
+    <!-- Name label -->
+    <TextView
+        android:id="@+id/tvName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="6dp"
+        android:text="User"
+        android:textColor="#FFF"
+        android:textSize="12sp"
+        android:background="#66000000"
+        android:padding="4dp"/>
+
+</FrameLayout>

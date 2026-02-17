@@ -52,12 +52,21 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
         holder.tvDate.setText(sdf.format(new Date(note.getUploadedAt())));
 
-        // Set file icon based on type
-        if (note.getFileType().equals("pdf")) {
-            holder.ivFileIcon.setImageResource(android.R.drawable.ic_menu_gallery);
-        } else if (note.getFileType().equals("text")) {
-            holder.ivFileIcon.setImageResource(android.R.drawable.ic_menu_edit);
+        // ✅ FIXED: Add null check for fileType
+        String fileType = note.getFileType();
+        if (fileType != null) {
+            // Set file icon based on type
+            if (fileType.equals("pdf")) {
+                holder.ivFileIcon.setImageResource(android.R.drawable.ic_menu_gallery);
+            } else if (fileType.equals("text")) {
+                holder.ivFileIcon.setImageResource(android.R.drawable.ic_menu_edit);
+            } else if (fileType.equals("document")) {
+                holder.ivFileIcon.setImageResource(android.R.drawable.ic_menu_edit);
+            } else {
+                holder.ivFileIcon.setImageResource(android.R.drawable.ic_menu_info_details);
+            }
         } else {
+            // Default icon if fileType is null
             holder.ivFileIcon.setImageResource(android.R.drawable.ic_menu_info_details);
         }
 

@@ -2,135 +2,87 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1C1C1E">
+    android:background="#000">
 
-    <!-- Remote Video (Full Screen) -->
-    <FrameLayout
+    <!-- Remote Grid -->
+    <GridLayout
         android:id="@+id/remoteVideoContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#000000">
+        android:columnCount="2"
+        android:rowCount="2" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Waiting for others to join..."
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:layout_gravity="center"/>
-
-    </FrameLayout>
-
-    <!-- Local Video (Small Window) -->
-    <androidx.cardview.widget.CardView
+    <!-- Local Preview -->
+    <FrameLayout
+        android:id="@+id/localVideoContainer"
         android:layout_width="120dp"
         android:layout_height="160dp"
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true"
-        android:layout_margin="16dp"
-        android:elevation="8dp"
-        android:radius="12dp">
+        android:layout_margin="12dp"
+        android:background="#55000000" />
 
-        <FrameLayout
-            android:id="@+id/localVideoContainer"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#2C2C2E"/>
-
-    </androidx.cardview.widget.CardView>
-
-    <!-- Top Status Bar -->
-    <LinearLayout
-        android:layout_width="match_parent"
+    <!-- Participant Count -->
+    <TextView
+        android:id="@+id/tvParticipantCount"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:orientation="vertical"
-        android:background="#80000000"
-        android:padding="16dp">
+        android:text="0 in call"
+        android:textColor="#FFF"
+        android:textSize="14sp"
+        android:layout_margin="10dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"/>
 
-        <TextView
-            android:id="@+id/tvCallStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Connecting..."
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold"/>
-
-        <TextView
-            android:id="@+id/tvParticipantCount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="👥 1 in call"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:layout_marginTop="4dp"/>
-
-    </LinearLayout>
-
-    <!-- Bottom Control Panel -->
+    <!-- Controls -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:orientation="vertical"
-        android:background="#80000000"
-        android:padding="20dp"
-        android:gravity="center">
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:background="#66000000"
+        android:padding="10dp">
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center">
+        <ImageButton
+            android:id="@+id/btnMute"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@android:drawable/ic_btn_speak_now"
+            android:background="@null"
+            android:contentDescription="@string/mute_microphone"/>
 
-            <!-- Mute Button -->
-            <ImageButton
-                android:id="@+id/btnMute"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:src="@android:drawable/ic_btn_speak_now"
-                android:background="@drawable/call_button_background"
-                android:backgroundTint="@android:color/darker_gray"
-                android:layout_margin="12dp"
-                android:contentDescription="Mute"/>
+        <ImageButton
+            android:id="@+id/btnVideo"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@android:drawable/ic_menu_camera"
+            android:background="@null"
+            android:contentDescription="@string/toggle_video"/>
 
-            <!-- Video Toggle Button -->
-            <ImageButton
-                android:id="@+id/btnVideo"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:src="@android:drawable/presence_video_online"
-                android:background="@drawable/call_button_background"
-                android:backgroundTint="@android:color/darker_gray"
-                android:layout_margin="12dp"
-                android:contentDescription="Toggle Video"/>
+        <ImageButton
+            android:id="@+id/btnSwitchCamera"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@android:drawable/ic_menu_rotate"
+            android:background="@null"
+            android:contentDescription="@string/switch_camera"/>
 
-            <!-- End Call Button -->
-            <ImageButton
-                android:id="@+id/btnEndCall"
-                android:layout_width="70dp"
-                android:layout_height="70dp"
-                android:src="@android:drawable/ic_menu_call"
-                android:background="@drawable/call_button_background"
-                android:backgroundTint="@android:color/holo_red_dark"
-                android:layout_margin="12dp"
-                android:rotation="135"
-                android:contentDescription="End Call"/>
+        <ImageButton
+            android:id="@+id/btnMuteAll"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@android:drawable/ic_lock_silent_mode"
+            android:background="@null"
+            android:contentDescription="@string/mute_all"/>
 
-            <!-- Switch Camera Button -->
-            <ImageButton
-                android:id="@+id/btnSwitchCamera"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:src="@android:drawable/ic_menu_camera"
-                android:background="@drawable/call_button_background"
-                android:backgroundTint="@android:color/darker_gray"
-                android:layout_margin="12dp"
-                android:contentDescription="Switch Camera"/>
-
-        </LinearLayout>
-
+        <ImageButton
+            android:id="@+id/btnEndCall"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:background="@null"
+            android:contentDescription="@string/end_call"/>
     </LinearLayout>
 
 </RelativeLayout>

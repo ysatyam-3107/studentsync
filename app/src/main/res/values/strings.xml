@@ -18,4 +18,18 @@
     <string name="join_room">Join Room</string>
     <string name="or">OR</string>
     <string name="create_a_new_room">Create a New Room</string>
+
+
+<!--<string name="app_name">StudySync</string>-->
+
+<!-- Video Call Controls -->
+<string name="mute_microphone">Mute microphone</string>
+<string name="toggle_video">Toggle video</string>
+<string name="switch_camera">Switch camera</string>
+<string name="end_call">End call</string>
+<string name="mute_all">Mute all participants</string>
+
+<!-- Video Tile -->
+<string name="profile_avatar">Profile avatar</string>
+
 </resources>

@@ -1,32 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.studysync">
 
-    <!-- Existing permissions -->
-    <uses-feature
-        android:name="android.hardware.camera"
-        android:required="false" />
+    <!-- ===================== -->
+    <!-- REQUIRED PERMISSIONS -->
+    <!-- ===================== -->
 
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
-    <!-- Video Call Permissions - ADD THESE -->
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
-    <!--Required permissions-->
+    <!-- Internet (Firebase + Agora) -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Storage (ONLY what you need) -->
+    <!-- For file picker + Firebase upload -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+
+    <!-- Camera & Audio (Agora Video Call) -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
-    <!--Optional permissions-->
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+
+    <!-- Network state (Agora – optional but recommended) -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+
+    <!-- Bluetooth (Android 12+) -->
     <uses-permission android:name="android.permission.BLUETOOTH"/>
-    <!-- For devices running Android 12 (API level 32) or higher and integrating Agora Video SDK version v4.1.0 or lower, you also need to add the following permissions -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
-    <!-- For Android 12.0 or higher, the following permissions are also required -->
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
+
+    <!-- Phone state (Agora optional) -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+
+    <!-- Camera feature (optional, not required) -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false"/>
+
+    <!-- ===================== -->
+    <!-- APPLICATION -->
+    <!-- ===================== -->
 
     <application
         android:allowBackup="true"
@@ -37,70 +51,70 @@
         android:theme="@style/Theme.Material3.DayNight.NoActionBar"
         tools:targetApi="31">
 
-        <!-- LoginActivity as LAUNCHER -->
+        <!-- LAUNCHER -->
         <activity
             android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 
-        <!-- All other activities -->
+        <!-- MAIN FLOW -->
         <activity
             android:name=".MainActivity"
-            android:exported="false" />
+            android:exported="false"/>
 
         <activity
             android:name=".RegisterActivity"
-            android:exported="false" />
+            android:exported="false"/>
 
         <activity
             android:name=".StudyRoomActivity"
-            android:exported="false" />
+            android:exported="false"/>
 
         <activity
             android:name=".StudyRoomInsideActivity"
             android:exported="false"
-            android:parentActivityName=".StudyRoomActivity" />
+            android:parentActivityName=".StudyRoomActivity"/>
 
         <activity
             android:name=".PomodoroActivity"
             android:exported="false"
-            android:parentActivityName=".StudyRoomInsideActivity" />
+            android:parentActivityName=".StudyRoomInsideActivity"/>
 
         <activity
             android:name=".ChatActivity"
             android:exported="false"
-            android:parentActivityName=".StudyRoomInsideActivity" />
+            android:parentActivityName=".StudyRoomInsideActivity"/>
 
         <activity
             android:name=".NotesActivity"
             android:exported="false"
-            android:parentActivityName=".StudyRoomInsideActivity" />
+            android:parentActivityName=".StudyRoomInsideActivity"/>
 
         <activity
             android:name=".TaskActivity"
             android:exported="false"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".MainActivity"/>
 
         <activity
             android:name=".MyRoomsActivity"
             android:exported="false"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".MainActivity"/>
 
         <activity
             android:name=".ProfileActivity"
             android:exported="false"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".MainActivity"/>
 
-        <!-- ADD THIS: Video Call Activity -->
+        <!-- VIDEO CALL -->
         <activity
             android:name=".VideoCallActivity"
             android:exported="false"
             android:screenOrientation="portrait"
-            android:parentActivityName=".StudyRoomInsideActivity" />
+            android:parentActivityName=".StudyRoomInsideActivity"/>
 
     </application>
 

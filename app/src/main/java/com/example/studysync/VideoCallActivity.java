@@ -3,129 +3,78 @@ package com.example.studysync;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.ImageButton;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import io.agora.rtc2.Constants;
-import io.agora.rtc2.IRtcEngineEventHandler;
-import io.agora.rtc2.RtcEngine;
-import io.agora.rtc2.RtcEngineConfig;
-import io.agora.rtc2.video.VideoCanvas;
-import io.agora.rtc2.ChannelMediaOptions;
+import android.widget.*;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.*;
+import java.util.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import io.agora.rtc2.*;
+import io.agora.rtc2.video.VideoCanvas;
+import io.agora.rtc2.ChannelMediaOptions;
 
 public class VideoCallActivity extends AppCompatActivity {
 
-    private static final String TAG = "VideoCallActivity";
     private static final int PERMISSION_REQ_ID = 22;
 
-    private static final String[] PERMISSIONS = {
-            Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO
-    };
+    private GridLayout remoteContainer;
+    private FrameLayout localContainer;
+    private TextView tvCount;
+
+    private ImageButton btnMute, btnVideo, btnEnd, btnSwitch, btnMuteAll;
 
     private RtcEngine rtcEngine;
-    private String roomCode;
-    private String userName;
-    private int localUid;
-    private int remoteUid = -1;
+    private boolean muted = false, videoEnabled = true;
 
-    private FrameLayout localContainer, remoteContainer;
-    private ImageButton btnMute, btnVideo, btnEnd, btnSwitch;
-    private TextView tvStatus, tvCount;
+    private final List<Integer> remoteUids = new ArrayList<>();
+    private final Map<Integer, View> videoTiles = new HashMap<>();
 
-    private boolean muted = false;
-    private boolean videoEnabled = true;
-
-    private DatabaseReference callRef;
-
-    // ======================= ACTIVITY =======================
+    // ================= ACTIVITY =================
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_video_call);
 
-        roomCode = getIntent().getStringExtra("roomCode");
-        userName = getIntent().getStringExtra("userName");
-
-        if (roomCode == null) {
-            Toast.makeText(this, "Invalid room", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
-
         initUI();
-        initFirebase();
 
-        if (hasPermissions()) {
-            initAgora();
-        } else {
-            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_REQ_ID);
-        }
+        if (hasPermissions()) initAgora();
+        else ActivityCompat.requestPermissions(
+                this,
+                new String[]{
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.RECORD_AUDIO},
+                PERMISSION_REQ_ID);
     }
 
-    // ======================= UI =======================
-
     private void initUI() {
-        localContainer = findViewById(R.id.localVideoContainer);
+
         remoteContainer = findViewById(R.id.remoteVideoContainer);
+        localContainer = findViewById(R.id.localVideoContainer);
+        tvCount = findViewById(R.id.tvParticipantCount);
 
         btnMute = findViewById(R.id.btnMute);
         btnVideo = findViewById(R.id.btnVideo);
         btnEnd = findViewById(R.id.btnEndCall);
         btnSwitch = findViewById(R.id.btnSwitchCamera);
-
-        tvStatus = findViewById(R.id.tvCallStatus);
-        tvCount = findViewById(R.id.tvParticipantCount);
+        btnMuteAll = findViewById(R.id.btnMuteAll);
 
         btnMute.setOnClickListener(v -> toggleMute());
         btnVideo.setOnClickListener(v -> toggleVideo());
         btnSwitch.setOnClickListener(v -> rtcEngine.switchCamera());
-        btnEnd.setOnClickListener(v -> showEndDialog());
+        btnEnd.setOnClickListener(v -> finish());
+        btnMuteAll.setOnClickListener(v -> muteAllParticipants());
     }
 
-    // ======================= PERMISSIONS =======================
-
-    private boolean hasPermissions() {
-        for (String p : PERMISSIONS) {
-            if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED)
-                return false;
-        }
-        return true;
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int code, @NonNull String[] perms, @NonNull int[] res) {
-        super.onRequestPermissionsResult(code, perms, res);
-        if (code == PERMISSION_REQ_ID && res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED) {
-            initAgora();
-        } else {
-            Toast.makeText(this, "Camera & Mic required", Toast.LENGTH_LONG).show();
-            finish();
-        }
-    }
-
-    // ======================= AGORA =======================
+    // ================= AGORA =================
 
     private void initAgora() {
+
         try {
             RtcEngineConfig config = new RtcEngineConfig();
             config.mContext = getApplicationContext();
@@ -133,105 +82,179 @@ public class VideoCallActivity extends AppCompatActivity {
             config.mEventHandler = rtcHandler;
 
             rtcEngine = RtcEngine.create(config);
-
-            rtcEngine.setChannelProfile(Constants.CHANNEL_PROFILE_COMMUNICATION);
             rtcEngine.enableVideo();
 
             setupLocalVideo();
             joinChannel();
 
         } catch (Exception e) {
-            Log.e(TAG, "Agora init error", e);
-            finish();
+            e.printStackTrace();
         }
     }
 
     private void setupLocalVideo() {
+
         TextureView view = new TextureView(this);
-        localContainer.addView(view, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-        ));
+        localContainer.addView(view);
 
         rtcEngine.setupLocalVideo(
-                new VideoCanvas(view, VideoCanvas.RENDER_MODE_HIDDEN, 0)
-        );
-        rtcEngine.startPreview();
+                new VideoCanvas(view,
+                        VideoCanvas.RENDER_MODE_HIDDEN,
+                        0));
     }
 
     private void joinChannel() {
-        localUid = Math.abs(
-                FirebaseAuth.getInstance().getCurrentUser().getUid().hashCode()
-        );
 
-        ChannelMediaOptions options = new ChannelMediaOptions();
-        options.clientRoleType = Constants.CLIENT_ROLE_BROADCASTER;
-        options.autoSubscribeAudio = true;
-        options.autoSubscribeVideo = true;
-        options.publishCameraTrack = true;
-        options.publishMicrophoneTrack = true;
+        ChannelMediaOptions options =
+                new ChannelMediaOptions();
+
+        options.clientRoleType =
+                Constants.CLIENT_ROLE_BROADCASTER;
 
         rtcEngine.joinChannel(
                 AgoraConfig.TOKEN,
-                roomCode,
+                "testRoom",
                 0,
-                options
-        );
-
-        tvStatus.setText("Connecting...");
+                options);
     }
 
-    // ======================= AGORA CALLBACKS =======================
+    // ================= EVENTS =================
 
-    private final IRtcEngineEventHandler rtcHandler = new IRtcEngineEventHandler() {
+    private final IRtcEngineEventHandler rtcHandler =
+            new IRtcEngineEventHandler() {
 
-        @Override
-        public void onJoinChannelSuccess(String channel, int uid, int elapsed) {
-            runOnUiThread(() -> tvStatus.setText("Connected"));
-        }
-
-        @Override
-        public void onUserJoined(int uid, int elapsed) {
-            runOnUiThread(() -> {
-                remoteUid = uid;
-                setupRemoteVideo(uid);
-            });
-        }
-
-        @Override
-        public void onUserOffline(int uid, int reason) {
-            runOnUiThread(() -> {
-                if (uid == remoteUid) {
-                    remoteUid = -1;
-                    remoteContainer.removeAllViews();
-                    tvStatus.setText("Waiting for others...");
+                @Override
+                public void onUserJoined(int uid, int elapsed) {
+                    runOnUiThread(() -> addRemoteUser(uid));
                 }
-            });
-        }
 
-        @Override
-        public void onError(int err) {
-            Log.e(TAG, "Agora error: " + err);
-        }
-    };
+                @Override
+                public void onUserOffline(int uid, int reason) {
+                    runOnUiThread(() -> removeRemoteUser(uid));
+                }
 
-    private void setupRemoteVideo(int uid) {
-        remoteContainer.removeAllViews();
+                @Override
+                public void onActiveSpeaker(int uid) {
+                    runOnUiThread(() -> highlightSpeaker(uid));
+                }
+            };
+
+    // ================= ADD USER =================
+
+    private void addRemoteUser(int uid) {
+
+        if (remoteUids.contains(uid)) return;
+        remoteUids.add(uid);
+
+        View tile = getLayoutInflater()
+                .inflate(R.layout.video_tile, null);
+
+        FrameLayout surface =
+                tile.findViewById(R.id.videoSurface);
 
         TextureView view = new TextureView(this);
-        remoteContainer.addView(view, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-        ));
+        surface.addView(view);
+
+        TextView name =
+                tile.findViewById(R.id.tvName);
+        name.setText("User " + uid);
+
+        videoTiles.put(uid, tile);
+        remoteContainer.addView(tile);
 
         rtcEngine.setupRemoteVideo(
-                new VideoCanvas(view, VideoCanvas.RENDER_MODE_HIDDEN, uid)
-        );
+                new VideoCanvas(view,
+                        VideoCanvas.RENDER_MODE_HIDDEN,
+                        uid));
 
-        remoteContainer.setVisibility(View.VISIBLE);
+        resizeGrid();
+        updateCount();
     }
 
-    // ======================= CONTROLS =======================
+    // ================= REMOVE USER =================
+
+    private void removeRemoteUser(int uid) {
+
+        remoteUids.remove(Integer.valueOf(uid));
+
+        View tile = videoTiles.get(uid);
+        if (tile != null) {
+            remoteContainer.removeView(tile);
+            videoTiles.remove(uid);
+        }
+
+        resizeGrid();
+        updateCount();
+    }
+
+    // ================= GRID RESIZE =================
+
+    private void resizeGrid() {
+
+        int total = remoteUids.size();
+
+        int cols = (int) Math.ceil(Math.sqrt(total));
+        int rows = (int) Math.ceil((double) total / cols);
+
+        remoteContainer.setColumnCount(cols);
+        remoteContainer.setRowCount(rows);
+
+        for (int i = 0;
+             i < remoteContainer.getChildCount();
+             i++) {
+
+            View child =
+                    remoteContainer.getChildAt(i);
+
+            GridLayout.LayoutParams params =
+                    new GridLayout.LayoutParams();
+
+            params.width =
+                    getResources().getDisplayMetrics().widthPixels / cols;
+
+            params.height =
+                    getResources().getDisplayMetrics().heightPixels / rows;
+
+            child.setLayoutParams(params);
+        }
+    }
+
+    private void updateCount() {
+        tvCount.setText("👥 " + (remoteUids.size() + 1) + " in call");
+    }
+
+    // ================= SPEAKER =================
+
+    private void highlightSpeaker(int uid) {
+
+        for (Map.Entry<Integer, View> entry :
+                videoTiles.entrySet()) {
+
+            View tile = entry.getValue();
+
+            if (entry.getKey() == uid) {
+                tile.setBackgroundColor(0xFF00FF00);
+                animateSpeaker(tile);
+            } else {
+                tile.setBackgroundColor(0xFF000000);
+            }
+        }
+    }
+
+    private void animateSpeaker(View tile) {
+
+        tile.animate()
+                .scaleX(1.05f)
+                .scaleY(1.05f)
+                .setDuration(150)
+                .withEndAction(() ->
+                        tile.animate()
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(150));
+    }
+
+    // ================= CONTROLS =================
 
     private void toggleMute() {
         muted = !muted;
@@ -241,68 +264,40 @@ public class VideoCallActivity extends AppCompatActivity {
     private void toggleVideo() {
         videoEnabled = !videoEnabled;
         rtcEngine.muteLocalVideoStream(!videoEnabled);
-        localContainer.setVisibility(videoEnabled ? View.VISIBLE : View.INVISIBLE);
+        localContainer.setVisibility(
+                videoEnabled ? View.VISIBLE : View.INVISIBLE);
     }
 
-    private void showEndDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("End Call")
-                .setMessage("Do you want to end the call?")
-                .setPositiveButton("End", (d, w) -> endCall())
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
+    private void muteAllParticipants() {
 
-    private void endCall() {
-        rtcEngine.leaveChannel();
-        updateFirebase(false);
-        finish();
-    }
-
-    // ======================= FIREBASE =======================
-
-    private void initFirebase() {
-        callRef = FirebaseDatabase.getInstance()
-                .getReference("Calls")
-                .child(roomCode);
-
-        updateFirebase(true);
-
-        callRef.child("participants")
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snap) {
-                        tvCount.setText("👥 " + snap.getChildrenCount() + " in call");
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {}
-                });
-    }
-
-    private void updateFirebase(boolean join) {
-        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        if (join) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("name", userName);
-            map.put("joinedAt", ServerValue.TIMESTAMP);
-            callRef.child("participants").child(uid).setValue(map);
-        } else {
-            callRef.child("participants").child(uid).removeValue();
+        for (Integer uid : remoteUids) {
+            rtcEngine.muteRemoteAudioStream(uid, true);
         }
+
+        Toast.makeText(this,
+                "All participants muted",
+                Toast.LENGTH_SHORT).show();
     }
 
-    // ======================= LIFECYCLE =======================
+    // ================= PERMISSION =================
+
+    private boolean hasPermissions() {
+        return ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    // ================= DESTROY =================
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
         if (rtcEngine != null) {
             rtcEngine.leaveChannel();
-            rtcEngine.stopPreview();
             RtcEngine.destroy();
             rtcEngine = null;
         }
-        updateFirebase(false);
     }
 }
