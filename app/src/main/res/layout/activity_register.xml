@@ -1,71 +1,151 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="20dp"
+    android:background="#0F0F0F"
     android:fillViewport="true">
 
     <LinearLayout
-        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
         android:gravity="center_horizontal">
 
-        <ImageView
-            android:id="@+id/imgProfile"
-            android:layout_width="110dp"
-            android:layout_height="110dp"
-            android:src="@mipmap/ic_launcher_round"
-            android:contentDescription="Profile image"
-            android:scaleType="centerCrop"
-            android:layout_marginBottom="12dp"
-            android:backgroundTint="#ddd"
-            android:padding="8dp" />
+        <!-- Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Create Account"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="6dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tap image to choose"
+            android:text="Join StudySync and start learning 🚀"
+            android:textSize="14sp"
+            android:textColor="#808080"
+            android:layout_marginBottom="28dp"/>
+
+        <!-- Profile Image -->
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/imgProfile"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/ic_profile_circle"
+            android:layout_marginBottom="8dp"
+            app:civ_border_width="2dp"
+            app:civ_border_color="#4CAF50"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tap to select profile photo"
             android:textSize="12sp"
-            android:layout_marginBottom="16dp" />
+            android:textColor="#808080"
+            android:layout_marginBottom="24dp"/>
 
-        <EditText
-            android:id="@+id/etName"
+        <!-- Name Field -->
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Full name"
-            android:inputType="textPersonName"
-            android:layout_marginBottom="12dp" />
+            android:hint="Full Name"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="#1A1A1A"
+            app:boxStrokeColor="#4CAF50"
+            app:boxCornerRadiusTopStart="14dp"
+            app:boxCornerRadiusTopEnd="14dp"
+            app:boxCornerRadiusBottomStart="14dp"
+            app:boxCornerRadiusBottomEnd="14dp"
+            android:layout_marginBottom="16dp">
 
-        <EditText
-            android:id="@+id/etEmailReg"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:padding="14dp"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Email -->
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Email"
-            android:inputType="textEmailAddress"
-            android:layout_marginBottom="12dp" />
+            android:hint="Email Address"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="#1A1A1A"
+            app:boxStrokeColor="#4CAF50"
+            android:layout_marginBottom="16dp">
 
-        <EditText
-            android:id="@+id/etPasswordReg"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etEmailReg"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textEmailAddress"
+                android:textColor="#FFFFFF"
+                android:padding="14dp"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Password -->
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Password (6+ chars)"
-            android:inputType="textPassword"
-            android:layout_marginBottom="16dp" />
+            android:hint="Password"
+            app:endIconMode="password_toggle"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="#1A1A1A"
+            app:boxStrokeColor="#4CAF50"
+            android:layout_marginBottom="24dp">
 
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPasswordReg"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"
+                android:textColor="#FFFFFF"
+                android:padding="14dp"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Register Button -->
         <Button
             android:id="@+id/btnRegisterNow"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:text="Register"
-            android:layout_marginBottom="12dp" />
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/register_button_bg"
+            android:layout_marginBottom="18dp"/>
 
+        <!-- Login Link -->
         <TextView
             android:id="@+id/tvLoginHere"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Already have an account? Login"
             android:textSize="14sp"
-            android:layout_marginTop="8dp" />
+            android:textColor="#4CAF50"
+            android:textStyle="bold"/>
+
+        <!-- Progress -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:visibility="gone"
+            android:indeterminateTint="#4CAF50"/>
+
     </LinearLayout>
+
 </ScrollView>

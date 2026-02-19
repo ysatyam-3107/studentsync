@@ -2,17 +2,23 @@ package com.example.studysync;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
+import android.animation.ObjectAnimator;
+import android.animation.AnimatorSet;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
@@ -25,8 +31,10 @@ public class StudyRoomActivity extends AppCompatActivity {
 
     private static final String TAG = "StudyRoomActivity";
 
-    private EditText etRoomCode;
+    private TextInputEditText etRoomCode;
     private Button btnJoinRoom, btnCreateRoom;
+    private CardView cardCreateRoom;
+    private ImageButton btnBack;
     private ProgressBar progressBar;
 
     private FirebaseAuth auth;
@@ -36,15 +44,59 @@ public class StudyRoomActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_study_room);
 
+        // Initialize views
         etRoomCode = findViewById(R.id.etRoomCode);
         btnJoinRoom = findViewById(R.id.btnJoinRoom);
-        btnCreateRoom = findViewById(R.id.btnCreateRoom);
+       // btnCreateRoom = findViewById(R.id.btnCreateRoom);
+        cardCreateRoom = findViewById(R.id.cardCreateRoom);
+        btnBack = findViewById(R.id.btnBack);
         progressBar = findViewById(R.id.progressBar);
 
         auth = FirebaseAuth.getInstance();
 
-        btnJoinRoom.setOnClickListener(v -> joinRoom());
-        btnCreateRoom.setOnClickListener(v -> createRoom());
+        // Entrance animation
+        animateEntrance();
+
+        // Button click listeners
+        btnJoinRoom.setOnClickListener(v -> {
+            animateButton(btnJoinRoom);
+            btnJoinRoom.postDelayed(this::joinRoom, 200);
+        });
+
+        cardCreateRoom.setOnClickListener(v -> {
+            animateButton(cardCreateRoom);
+            cardCreateRoom.postDelayed(this::createRoom, 200);
+        });
+
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> {
+                animateButton(btnBack);
+                btnBack.postDelayed(this::finish, 150);
+            });
+        }
+    }
+
+    private void animateEntrance() {
+        View contentView = findViewById(android.R.id.content);
+        if (contentView != null) {
+            contentView.setAlpha(0f);
+            contentView.animate()
+                    .alpha(1f)
+                    .setDuration(400)
+                    .setInterpolator(new AccelerateDecelerateInterpolator())
+                    .start();
+        }
+    }
+
+    private void animateButton(View view) {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(view, "scaleX", 1f, 0.95f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(view, "scaleY", 1f, 0.95f, 1f);
+
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playTogether(scaleX, scaleY);
+        animatorSet.setDuration(200);
+        animatorSet.setInterpolator(new AccelerateDecelerateInterpolator());
+        animatorSet.start();
     }
 
     private void createRoom() {
@@ -54,23 +106,29 @@ public class StudyRoomActivity extends AppCompatActivity {
             return;
         }
 
+        Log.d(TAG, "Create room button clicked");
         setInProgress(true);
         String roomCode = generateRandomCode();
+        Log.d(TAG, "Generated room code: " + roomCode);
 
         DatabaseReference roomsRef = FirebaseDatabase.getInstance().getReference("Rooms");
 
         // Check if room code already exists
         roomsRef.child(roomCode).get().addOnCompleteListener(task -> {
             if (!task.isSuccessful()) {
+                Log.e(TAG, "Failed to check room availability", task.getException());
                 handleError("Failed to check room availability. Try again.");
                 return;
             }
 
             DataSnapshot snap = task.getResult();
             if (snap != null && snap.exists()) {
+                Log.d(TAG, "Room code collision, generating new code");
                 // Collision - retry with new code
+                setInProgress(false);
                 createRoom(); // Recursive call
             } else {
+                Log.d(TAG, "Room code available, creating room");
                 // Create the room
                 createRoomInDatabase(roomCode, currentUser.getUid());
             }
@@ -78,6 +136,8 @@ public class StudyRoomActivity extends AppCompatActivity {
     }
 
     private void createRoomInDatabase(String roomCode, String creatorUid) {
+        Log.d(TAG, "Creating room in database: " + roomCode);
+
         DatabaseReference roomRef = FirebaseDatabase.getInstance()
                 .getReference("Rooms").child(roomCode);
 
@@ -100,12 +160,12 @@ public class StudyRoomActivity extends AppCompatActivity {
 
         roomRef.setValue(roomData)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Room created successfully: " + roomCode);
+                    Log.d(TAG, "✅ Room created successfully: " + roomCode);
                     Toast.makeText(this, "Room created: " + roomCode, Toast.LENGTH_LONG).show();
                     navigateToRoom(roomCode);
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error creating room", e);
+                    Log.e(TAG, "❌ Error creating room", e);
                     handleError("Error creating room: " + e.getMessage());
                 });
     }
@@ -114,9 +174,12 @@ public class StudyRoomActivity extends AppCompatActivity {
         String roomCode = etRoomCode.getText() != null ?
                 etRoomCode.getText().toString().trim().toUpperCase() : "";
 
+        Log.d(TAG, "Join room button clicked. Room code: " + roomCode);
+
         if (TextUtils.isEmpty(roomCode)) {
             etRoomCode.setError("Room code cannot be empty.");
             etRoomCode.requestFocus();
+            Toast.makeText(this, "Please enter a room code", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -130,23 +193,31 @@ public class StudyRoomActivity extends AppCompatActivity {
         DatabaseReference roomRef = FirebaseDatabase.getInstance()
                 .getReference("Rooms").child(roomCode);
 
+        Log.d(TAG, "Checking if room exists: " + roomCode);
+
         roomRef.get().addOnCompleteListener(task -> {
             if (!task.isSuccessful()) {
+                Log.e(TAG, "Failed to check room existence", task.getException());
                 handleError("Failed to check room existence. Try again.");
                 return;
             }
 
             DataSnapshot snap = task.getResult();
             if (snap != null && snap.exists()) {
+                Log.d(TAG, "✅ Room exists, joining: " + roomCode);
                 // Room exists - add user as member
                 roomRef.child("members").child(currentUser.getUid()).setValue(true)
                         .addOnSuccessListener(aVoid -> {
+                            Log.d(TAG, "✅ Successfully joined room");
                             Toast.makeText(this, "Joined room: " + roomCode, Toast.LENGTH_SHORT).show();
                             navigateToRoom(roomCode);
                         })
-                        .addOnFailureListener(e ->
-                                handleError("Failed to join room: " + e.getMessage()));
+                        .addOnFailureListener(e -> {
+                            Log.e(TAG, "❌ Failed to join room", e);
+                            handleError("Failed to join room: " + e.getMessage());
+                        });
             } else {
+                Log.e(TAG, "❌ Room does not exist: " + roomCode);
                 setInProgress(false);
                 etRoomCode.setError("This room does not exist.");
                 Toast.makeText(this, "Invalid Room Code.", Toast.LENGTH_SHORT).show();
@@ -172,14 +243,13 @@ public class StudyRoomActivity extends AppCompatActivity {
 
         Intent intent = new Intent(StudyRoomActivity.this, StudyRoomInsideActivity.class);
         intent.putExtra("roomCode", roomCode);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP); // Clear any previous activities
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
         startActivity(intent);
 
         Log.d(TAG, "Started StudyRoomInsideActivity");
-
-        // Don't call finish() here - let user go back to StudyRoomActivity
     }
+
     private void handleError(String message) {
         setInProgress(false);
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
@@ -191,6 +261,11 @@ public class StudyRoomActivity extends AppCompatActivity {
             progressBar.setVisibility(inProgress ? View.VISIBLE : View.GONE);
         }
         btnJoinRoom.setEnabled(!inProgress);
-        btnCreateRoom.setEnabled(!inProgress);
+        if (btnCreateRoom != null) {
+            btnCreateRoom.setEnabled(!inProgress);
+        }
+        if (cardCreateRoom != null) {
+            cardCreateRoom.setEnabled(!inProgress);
+        }
     }
 }

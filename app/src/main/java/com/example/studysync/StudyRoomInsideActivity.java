@@ -93,69 +93,75 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
         // Load members
         loadMembers();
 
-        // Set click listeners
+        // Set click listeners - FIXED: Now they will work!
         btnPomodoroRoom.setOnClickListener(v -> {
+            Log.d(TAG, "Pomodoro button clicked");
             Intent intent = new Intent(this, PomodoroActivity.class);
             intent.putExtra("roomCode", roomCode);
             startActivity(intent);
         });
 
         btnChatRoom.setOnClickListener(v -> {
+            Log.d(TAG, "Chat button clicked");
             Intent intent = new Intent(this, ChatActivity.class);
             intent.putExtra("roomCode", roomCode);
             startActivity(intent);
         });
 
         btnNotesRoom.setOnClickListener(v -> {
+            Log.d(TAG, "Notes button clicked");
             Intent intent = new Intent(this, NotesActivity.class);
             intent.putExtra("roomCode", roomCode);
             startActivity(intent);
         });
 
         btnTasksRoom.setOnClickListener(v -> {
-            Intent intent = new Intent(this, TaskActivity.class);
-            startActivity(intent);
-        });
-        btnTasksRoom.setOnClickListener(v -> {
+            Log.d(TAG, "Tasks button clicked");
             Intent intent = new Intent(this, TaskActivity.class);
             startActivity(intent);
         });
 
-// ADD THIS - Video Call Button
         btnVideoCall.setOnClickListener(v -> {
-            String userId = auth.getCurrentUser().getUid();
-            DatabaseReference userRef = FirebaseDatabase.getInstance()
-                    .getReference("Users").child(userId);
-
-            userRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    String userName = "User";
-                    if (snapshot.exists()) {
-                        String name = snapshot.child("name").getValue(String.class);
-                        if (name != null && !name.isEmpty()) {
-                            userName = name;
-                        }
-                    }
-
-                    Intent intent = new Intent(StudyRoomInsideActivity.this, VideoCallActivity.class);
-                    intent.putExtra("roomCode", roomCode);
-                    intent.putExtra("userName", userName);
-                    startActivity(intent);
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                    Toast.makeText(StudyRoomInsideActivity.this,
-                            "Failed to load user data", Toast.LENGTH_SHORT).show();
-                }
-            });
+            Log.d(TAG, "Video call button clicked");
+            openVideoCall();
         });
 
-        btnLeaveRoom.setOnClickListener(v -> leaveRoom());
+        btnLeaveRoom.setOnClickListener(v -> {
+            Log.d(TAG, "Leave room button clicked");
+            leaveRoom();
+        });
+    }
 
+    private void openVideoCall() {
+        String userId = auth.getCurrentUser().getUid();
+        DatabaseReference userRef = FirebaseDatabase.getInstance()
+                .getReference("Users").child(userId);
 
-        btnLeaveRoom.setOnClickListener(v -> leaveRoom());
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String userName = "User";
+                if (snapshot.exists()) {
+                    String name = snapshot.child("name").getValue(String.class);
+                    if (name != null && !name.isEmpty()) {
+                        userName = name;
+                    }
+                }
+
+                Log.d(TAG, "Opening video call for user: " + userName);
+                Intent intent = new Intent(StudyRoomInsideActivity.this, VideoCallActivity.class);
+                intent.putExtra("roomCode", roomCode);
+                intent.putExtra("userName", userName);
+                startActivity(intent);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Failed to load user data", error.toException());
+                Toast.makeText(StudyRoomInsideActivity.this,
+                        "Failed to load user data", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void verifyRoomExists() {
@@ -168,7 +174,7 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
                             "This room no longer exists", Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
-                    Log.d(TAG, "Room verified successfully");
+                    Log.d(TAG, "✅ Room verified successfully");
                 }
             }
 
@@ -216,7 +222,7 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
 
                             processed[0]++;
                             if (processed[0] == total) {
-                                Log.d(TAG, "All members loaded: " + membersList.size());
+                                Log.d(TAG, "✅ All members loaded: " + membersList.size());
                                 membersAdapter.updateList(new ArrayList<>(membersList));
                             }
                         }
