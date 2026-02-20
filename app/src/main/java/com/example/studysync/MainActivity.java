@@ -146,26 +146,63 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadUserName(String uid) {
-        userRef = FirebaseDatabase.getInstance()
-                .getReference("Users").child(uid);
 
-        userRef.addListenerForSingleValueEvent(
+        DatabaseReference ref =
+                FirebaseDatabase.getInstance()
+                        .getReference("Users")
+                        .child(uid);
+
+        ref.addListenerForSingleValueEvent(
                 new ValueEventListener() {
                     @Override
-                    public void onDataChange(@NonNull DataSnapshot s) {
-                        String name =
-                                s.child("name").getValue(String.class);
-                        tvWelcome.setText(
-                                name != null ?
-                                        "Welcome back, " + name + "!" :
-                                        "Welcome back!");
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                        if (snapshot.exists()) {
+
+                            String name =
+                                    snapshot.child("name")
+                                            .getValue(String.class);
+
+                            if (name != null && !name.trim().isEmpty()) {
+
+                                tvWelcome.setText(
+                                        "Welcome back, " + name + "!"
+                                );
+
+                            } else {
+
+                                // fallback to Firebase display name
+                                FirebaseUser user =
+                                        FirebaseAuth.getInstance()
+                                                .getCurrentUser();
+
+                                if (user != null &&
+                                        user.getDisplayName() != null) {
+
+                                    tvWelcome.setText(
+                                            "Welcome back, " +
+                                                    user.getDisplayName() + "!"
+                                    );
+
+                                } else if (user != null) {
+
+                                    // fallback to email ONLY if everything missing
+                                    tvWelcome.setText(
+                                            "Welcome back, " +
+                                                    user.getEmail() + "!"
+                                    );
+                                }
+                            }
+
+                        }
                     }
 
                     @Override
-                    public void onCancelled(@NonNull DatabaseError e) {}
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        tvWelcome.setText("Welcome back!");
+                    }
                 });
     }
-
     private void loadRoomCount(String uid) {
         roomsRef = FirebaseDatabase.getInstance()
                 .getReference("Rooms");
