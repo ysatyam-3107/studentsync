@@ -1,59 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="#0B0F1A">
 
+    <!-- PREMIUM HEADER -->
     <LinearLayout
+        android:id="@+id/headerLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="220dp"
         android:orientation="vertical"
-        android:background="#8E24AA"
-        android:padding="16dp">
+        android:background="@drawable/premium_task_header"
+        android:padding="24dp"
+        android:gravity="bottom">
 
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Task Tracker"
-            android:textSize="24sp"
+            android:textSize="26sp"
             android:textStyle="bold"
             android:textColor="#FFFFFF"/>
 
         <TextView
             android:id="@+id/tvProgress"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="0/0 tasks completed"
-            android:textSize="16sp"
-            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textColor="#E0E0E0"
             android:layout_marginTop="8dp"/>
 
         <ProgressBar
             android:id="@+id/progressBarTask"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
-            android:layout_height="8dp"
-            android:layout_marginTop="8dp"
+            android:layout_height="6dp"
+            android:layout_marginTop="12dp"
             android:max="100"
             android:progress="0"
-            android:progressTint="#FFFFFF"/>
+            android:progressDrawable="@drawable/premium_progress_bar"/>
+
     </LinearLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvTasks"
+    <!-- TASK LIST CONTAINER -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardContainer"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="8dp"/>
+        android:layout_height="match_parent"
+        android:layout_below="@id/headerLayout"
+        android:layout_marginTop="-30dp"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="12dp"
+        app:cardBackgroundColor="#121826">
 
-    <Button
-        android:id="@+id/btnAddTask"
-        android:layout_width="match_parent"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvTasks"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="20dp"
+            android:clipToPadding="false"
+            android:overScrollMode="never"/>
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- FLOATING ADD BUTTON -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAddTask"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="+ Add New Task"
-        android:backgroundTint="#8E24AA"
-        android:textColor="#FFFFFF"
-        android:layout_margin="16dp"/>
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="24dp"
+        android:src="@android:drawable/ic_input_add"
+        app:backgroundTint="#4CAF50"
+        app:tint="#FFFFFF"
+        app:elevation="14dp"/>
 
-</LinearLayout>
+</RelativeLayout>
