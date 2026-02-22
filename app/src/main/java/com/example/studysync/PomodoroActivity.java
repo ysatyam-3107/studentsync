@@ -21,16 +21,18 @@ public class PomodoroActivity extends AppCompatActivity {
     private TextView tvTimer, tvStatus, tvTimerType;
     private Button btnStart, btnStop, btnReset, btnSettings;
 
-    private CountDownTimer timer;
+    private CountDownTimer countDownTimer;
 
     private String roomCode;
     private DatabaseReference timerRef;
 
     private boolean isHost = false;
+    private boolean isBreak = false;
 
-    // Default timer settings (in minutes)
     private int workDuration = 25;
     private int breakDuration = 5;
+
+    private long remainingMillis = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,40 +49,41 @@ public class PomodoroActivity extends AppCompatActivity {
 
         roomCode = getIntent().getStringExtra("roomCode");
 
-        if (roomCode == null || roomCode.isEmpty()) {
-            Toast.makeText(this, "Invalid room code", Toast.LENGTH_SHORT).show();
+        if (roomCode == null) {
             finish();
             return;
         }
 
-        timerRef = FirebaseDatabase.getInstance().getReference("Rooms")
-                .child(roomCode).child("timer");
+        timerRef = FirebaseDatabase.getInstance()
+                .getReference("Rooms")
+                .child(roomCode)
+                .child("timer");
 
         checkHost();
         listenForTimer();
         loadTimerSettings();
 
-        btnStart.setOnClickListener(v -> startTimerInFirebase());
-        btnStop.setOnClickListener(v -> stopTimerInFirebase());
-        btnReset.setOnClickListener(v -> resetTimerInFirebase());
+        btnStart.setOnClickListener(v -> startTimer());
+        btnStop.setOnClickListener(v -> pauseTimer());
+        btnReset.setOnClickListener(v -> resetTimer());
         btnSettings.setOnClickListener(v -> showSettingsDialog());
     }
 
+    // ===============================
+    // HOST CHECK
+    // ===============================
+
     private void checkHost() {
         DatabaseReference roomRef = FirebaseDatabase.getInstance()
-                .getReference("Rooms").child(roomCode);
+                .getReference("Rooms")
+                .child(roomCode);
 
         roomRef.child("createdBy").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String creator = snapshot.getValue(String.class);
-
-                if (FirebaseAuth.getInstance().getCurrentUser() == null) {
-                    finish();
-                    return;
-                }
-
                 String myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
                 isHost = myUid.equals(creator);
 
                 btnStart.setEnabled(isHost);
@@ -91,34 +94,6 @@ public class PomodoroActivity extends AppCompatActivity {
                 if (!isHost) {
                     tvStatus.setText("Host controls the timer");
                     btnSettings.setVisibility(View.GONE);
-                } else {
-                    btnSettings.setVisibility(View.VISIBLE);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(PomodoroActivity.this,
-                        "Failed to check host status", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void loadTimerSettings() {
-        DatabaseReference settingsRef = FirebaseDatabase.getInstance()
-                .getReference("Rooms").child(roomCode).child("timerSettings");
-
-        settingsRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    Integer work = snapshot.child("workDuration").getValue(Integer.class);
-                    Integer breakTime = snapshot.child("breakDuration").getValue(Integer.class);
-
-                    if (work != null) workDuration = work;
-                    if (breakTime != null) breakDuration = breakTime;
-
-                    updateTimerDisplay();
                 }
             }
 
@@ -127,190 +102,241 @@ public class PomodoroActivity extends AppCompatActivity {
         });
     }
 
-    private void showSettingsDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_timer_settings, null);
+    // ===============================
+    // TIMER START
+    // ===============================
 
-        EditText etWorkDuration = dialogView.findViewById(R.id.etWorkDuration);
-        EditText etBreakDuration = dialogView.findViewById(R.id.etBreakDuration);
-        Button btnSave = dialogView.findViewById(R.id.btnSaveSettings);
-        Button btnCancel = dialogView.findViewById(R.id.btnCancelSettings);
+    private void startTimer() {
 
-        // Set current values
-        etWorkDuration.setText(String.valueOf(workDuration));
-        etBreakDuration.setText(String.valueOf(breakDuration));
+        if (!isHost) return;
 
-        builder.setView(dialogView);
-        AlertDialog dialog = builder.create();
+        if (remainingMillis == 0) {
+            remainingMillis = (isBreak ? breakDuration : workDuration) * 60L * 1000L;
+        }
 
-        btnSave.setOnClickListener(v -> {
-            String workStr = etWorkDuration.getText().toString().trim();
-            String breakStr = etBreakDuration.getText().toString().trim();
+        long endTime = System.currentTimeMillis() + remainingMillis;
 
-            if (workStr.isEmpty() || breakStr.isEmpty()) {
-                Toast.makeText(this, "Please enter both durations", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            try {
-                int work = Integer.parseInt(workStr);
-                int breakTime = Integer.parseInt(breakStr);
-
-                if (work < 1 || work > 120) {
-                    Toast.makeText(this, "Work time must be 1-120 minutes", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if (breakTime < 1 || breakTime > 60) {
-                    Toast.makeText(this, "Break time must be 1-60 minutes", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                saveTimerSettings(work, breakTime);
-                dialog.dismiss();
-
-            } catch (NumberFormatException e) {
-                Toast.makeText(this, "Please enter valid numbers", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
-
-        dialog.show();
+        timerRef.child("running").setValue(true);
+        timerRef.child("endTime").setValue(endTime);
+        timerRef.child("isBreak").setValue(isBreak);
     }
 
-    private void saveTimerSettings(int work, int breakTime) {
-        DatabaseReference settingsRef = FirebaseDatabase.getInstance()
-                .getReference("Rooms").child(roomCode).child("timerSettings");
+    // ===============================
+    // TIMER PAUSE (STOP)
+    // ===============================
 
-        settingsRef.child("workDuration").setValue(work);
-        settingsRef.child("breakDuration").setValue(breakTime);
+    private void pauseTimer() {
 
-        workDuration = work;
-        breakDuration = breakTime;
+        if (!isHost) return;
 
-        Toast.makeText(this, "Timer settings updated!", Toast.LENGTH_SHORT).show();
-        updateTimerDisplay();
-    }
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
 
-    private void updateTimerDisplay() {
-        int minutes = workDuration;
-        tvTimer.setText(String.format("%02d:00", minutes));
-        tvTimerType.setText("Work Session (" + workDuration + " min)");
-    }
-
-    private void startTimerInFirebase() {
-        timerRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Boolean isBreak = snapshot.child("isBreak").getValue(Boolean.class);
-                if (isBreak == null) isBreak = false;
-
-                int duration = isBreak ? breakDuration : workDuration;
-                long endTime = System.currentTimeMillis() + (duration * 60 * 1000);
-
-                timerRef.child("endTime").setValue(endTime);
-                timerRef.child("running").setValue(true);
-                timerRef.child("isBreak").setValue(isBreak);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
-        });
-    }
-
-    private void stopTimerInFirebase() {
         timerRef.child("running").setValue(false);
     }
 
-    private void resetTimerInFirebase() {
+    // ===============================
+    // TIMER RESET
+    // ===============================
+
+    private void resetTimer() {
+
+        if (!isHost) return;
+
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
+
+        remainingMillis = (isBreak ? breakDuration : workDuration) * 60L * 1000L;
+
         timerRef.child("running").setValue(false);
         timerRef.child("endTime").setValue(0);
-        timerRef.child("isBreak").setValue(false);
-        updateTimerDisplay();
+        timerRef.child("isBreak").setValue(isBreak);
+
+        updateTimerUI(remainingMillis);
+        tvStatus.setText("Reset");
     }
 
+    // ===============================
+    // LISTEN FIREBASE TIMER
+    // ===============================
+
     private void listenForTimer() {
+
         timerRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+
                 Boolean running = snapshot.child("running").getValue(Boolean.class);
                 Long endTime = snapshot.child("endTime").getValue(Long.class);
-                Boolean isBreak = snapshot.child("isBreak").getValue(Boolean.class);
+                Boolean breakState = snapshot.child("isBreak").getValue(Boolean.class);
 
                 if (running == null) running = false;
                 if (endTime == null) endTime = 0L;
-                if (isBreak == null) isBreak = false;
+                if (breakState == null) breakState = false;
+
+                isBreak = breakState;
 
                 if (running) {
-                    startLocalCountdown(endTime, isBreak);
-                    tvStatus.setText(isBreak ? "Break Time!" : "Focus Time!");
-                    String sessionType = isBreak ?
-                            "Break (" + breakDuration + " min)" :
-                            "Work Session (" + workDuration + " min)";
-                    tvTimerType.setText(sessionType);
+                    startLocalTimer(endTime);
+                    tvStatus.setText(isBreak ? "Break Time" : "Focus Time");
                 } else {
-                    if (timer != null) timer.cancel();
-                    tvStatus.setText("Ready");
-                    updateTimerDisplay();
+                    if (countDownTimer != null) countDownTimer.cancel();
+                    tvStatus.setText("Paused");
                 }
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(PomodoroActivity.this,
-                        "Error listening to timer", Toast.LENGTH_SHORT).show();
-            }
+            public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
 
-    private void startLocalCountdown(long endTime, boolean isBreakTime) {
-        if (timer != null) timer.cancel();
+    // ===============================
+    // LOCAL COUNTDOWN
+    // ===============================
 
-        long remaining = endTime - System.currentTimeMillis();
+    private void startLocalTimer(long endTime) {
 
-        if (remaining <= 0) {
-            tvTimer.setText("00:00");
-            tvStatus.setText("Session finished!");
+        if (countDownTimer != null) countDownTimer.cancel();
 
-            // Auto-switch to break/work
-            if (isHost) {
-                timerRef.child("isBreak").setValue(!isBreakTime);
-                timerRef.child("running").setValue(false);
-            }
+        remainingMillis = endTime - System.currentTimeMillis();
+
+        if (remainingMillis <= 0) {
+            switchSession();
             return;
         }
 
-        timer = new CountDownTimer(remaining, 1000) {
+        countDownTimer = new CountDownTimer(remainingMillis, 1000) {
+
             @Override
             public void onTick(long millisUntilFinished) {
-                int min = (int) (millisUntilFinished / 1000) / 60;
-                int sec = (int) (millisUntilFinished / 1000) % 60;
-                tvTimer.setText(String.format("%02d:%02d", min, sec));
+                remainingMillis = millisUntilFinished;
+                updateTimerUI(millisUntilFinished);
             }
 
             @Override
             public void onFinish() {
-                tvTimer.setText("00:00");
-                tvStatus.setText(isBreakTime ? "Break finished!" : "Focus session finished!");
-                Toast.makeText(PomodoroActivity.this,
-                        isBreakTime ? "Time to work!" : "Take a break!",
-                        Toast.LENGTH_LONG).show();
-
-                // Auto-switch between work and break
-                if (isHost) {
-                    timerRef.child("isBreak").setValue(!isBreakTime);
-                    timerRef.child("running").setValue(false);
-                }
+                remainingMillis = 0;
+                updateTimerUI(0);
+                switchSession();
             }
         }.start();
+    }
+
+    // ===============================
+    // SWITCH WORK <-> BREAK
+    // ===============================
+
+    private void switchSession() {
+
+        if (!isHost) return;
+
+        isBreak = !isBreak;
+
+        timerRef.child("isBreak").setValue(isBreak);
+        timerRef.child("running").setValue(false);
+
+        remainingMillis = (isBreak ? breakDuration : workDuration) * 60L * 1000L;
+
+        Toast.makeText(this,
+                isBreak ? "Break Started!" : "Focus Time!",
+                Toast.LENGTH_LONG).show();
+    }
+
+    // ===============================
+    // UI UPDATE
+    // ===============================
+
+    private void updateTimerUI(long millis) {
+        int minutes = (int) (millis / 1000) / 60;
+        int seconds = (int) (millis / 1000) % 60;
+
+        tvTimer.setText(String.format("%02d:%02d", minutes, seconds));
+        tvTimerType.setText(isBreak ?
+                "Break (" + breakDuration + " min)" :
+                "Work (" + workDuration + " min)");
+    }
+
+    // ===============================
+    // LOAD SETTINGS
+    // ===============================
+
+    private void loadTimerSettings() {
+        DatabaseReference settingsRef = FirebaseDatabase.getInstance()
+                .getReference("Rooms")
+                .child(roomCode)
+                .child("timerSettings");
+
+        settingsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Integer work = snapshot.child("workDuration").getValue(Integer.class);
+                Integer breakTime = snapshot.child("breakDuration").getValue(Integer.class);
+
+                if (work != null) workDuration = work;
+                if (breakTime != null) breakDuration = breakTime;
+
+                remainingMillis = workDuration * 60L * 1000L;
+                updateTimerUI(remainingMillis);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    // ===============================
+    // SETTINGS DIALOG
+    // ===============================
+
+    private void showSettingsDialog() {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View view = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_timer_settings, null);
+
+        EditText etWork = view.findViewById(R.id.etWorkDuration);
+        EditText etBreak = view.findViewById(R.id.etBreakDuration);
+
+        etWork.setText(String.valueOf(workDuration));
+        etBreak.setText(String.valueOf(breakDuration));
+
+        builder.setView(view)
+                .setPositiveButton("Save", (dialog, which) -> {
+
+                    int newWork = Integer.parseInt(etWork.getText().toString());
+                    int newBreak = Integer.parseInt(etBreak.getText().toString());
+
+                    workDuration = newWork;
+                    breakDuration = newBreak;
+
+                    FirebaseDatabase.getInstance()
+                            .getReference("Rooms")
+                            .child(roomCode)
+                            .child("timerSettings")
+                            .child("workDuration")
+                            .setValue(newWork);
+
+                    FirebaseDatabase.getInstance()
+                            .getReference("Rooms")
+                            .child(roomCode)
+                            .child("timerSettings")
+                            .child("breakDuration")
+                            .setValue(newBreak);
+
+                    remainingMillis = workDuration * 60L * 1000L;
+                    updateTimerUI(remainingMillis);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (timer != null) {
-            timer.cancel();
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
         }
     }
 }

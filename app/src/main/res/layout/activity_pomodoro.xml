@@ -1,83 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="24dp"
-    android:background="#F8F9FA">
+    android:background="#0E0E0E"
+    android:padding="24dp">
 
+    <!-- Title -->
     <TextView
         android:id="@+id/tvTimerTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Pomodoro Timer"
-        android:textSize="24sp"
+        android:text="Pomodoro"
+        android:textSize="26sp"
         android:textStyle="bold"
-        android:layout_marginBottom="12dp"/>
-
-    <TextView
-        android:id="@+id/tvTimerType"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Work Session (25 min)"
-        android:textSize="16sp"
-        android:textColor="#666666"
-        android:layout_marginBottom="20dp"/>
-
-    <TextView
-        android:id="@+id/tvTimer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="25:00"
-        android:textSize="64sp"
-        android:textStyle="bold"
-        android:textColor="#1976D2"
-        android:layout_marginBottom="30dp"/>
-
-    <Button
-        android:id="@+id/btnStart"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:text="Start"
-        android:backgroundTint="#4CAF50"
-        android:textColor="@android:color/white"
-        android:layout_marginBottom="12dp"/>
-
-    <Button
-        android:id="@+id/btnStop"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:text="Stop"
-        android:backgroundTint="#F44336"
-        android:textColor="@android:color/white"
-        android:layout_marginBottom="12dp"/>
-
-    <Button
-        android:id="@+id/btnReset"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:text="Reset"
-        android:backgroundTint="#1976D2"
-        android:textColor="@android:color/white"
-        android:layout_marginBottom="12dp"/>
-
-    <!-- NEW: Settings Button -->
-    <Button
-        android:id="@+id/btnSettings"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:text="⚙️ Timer Settings"
-        android:backgroundTint="#9C27B0"
-        android:textColor="@android:color/white"
-        android:layout_marginBottom="12dp"/>
-
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Ready"
-        android:textSize="16sp"
+        android:textColor="#FFFFFF"
+        android:layout_centerHorizontal="true"
         android:layout_marginTop="20dp"/>
 
-</LinearLayout>
+    <!-- Circular Timer Container -->
+    <FrameLayout
+        android:id="@+id/timerContainer"
+        android:layout_width="280dp"
+        android:layout_height="280dp"
+        android:layout_centerInParent="true">
+
+        <ProgressBar
+            android:id="@+id/circularProgress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:progressDrawable="@drawable/circular_progress_drawable"
+            android:max="100"
+            android:rotation="-90"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvTimerType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Work Session"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp"/>
+
+            <TextView
+                android:id="@+id/tvTimer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="25:00"
+                android:textSize="54sp"
+                android:textStyle="bold"
+                android:textColor="#4CAF50"
+                android:layout_marginTop="6dp"/>
+
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ready"
+                android:textColor="#777777"
+                android:textSize="13sp"
+                android:layout_marginTop="8dp"/>
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+    <!-- Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical"
+        android:layout_marginBottom="40dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStart"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="48dp"
+                android:text="Start"
+                app:cornerRadius="14dp"
+                app:backgroundTint="#4CAF50"
+                android:textColor="#FFFFFF"
+                android:layout_marginEnd="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStop"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="48dp"
+                android:text="pause"
+                app:cornerRadius="14dp"
+                app:backgroundTint="#E53935"
+                android:textColor="#FFFFFF"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnReset"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Reset"
+            app:cornerRadius="14dp"
+            app:backgroundTint="#2A2A2A"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="12dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSettings"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="⚙ Settings"
+            app:cornerRadius="14dp"
+            app:backgroundTint="#3A3A3A"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="12dp"/>
+
+    </LinearLayout>
+
+</RelativeLayout>
