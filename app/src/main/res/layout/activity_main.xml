@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0F0F0F"
-    tools:context=".MainActivity">
+    android:background="#0F0F0F">
 
-    <!-- Main Content -->
+    <!-- ================= CONTENT ================= -->
     <ScrollView
-        android:id="@+id/scrollContent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/bottomNavigation"
@@ -21,24 +18,22 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Header with Dark Gradient -->
+            <!-- ===== HEADER ===== -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/dark_header_gradient"
                 android:padding="24dp"
-                android:paddingBottom="32dp">
+                android:paddingBottom="36dp">
 
-                <!-- Profile Icon -->
                 <ImageView
                     android:id="@+id/ivProfile"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     android:layout_alignParentEnd="true"
-                    android:src="@drawable/ic_profile_circle"
                     android:background="@drawable/profile_icon_bg"
                     android:padding="8dp"
-                    android:contentDescription="Profile" />
+                    android:src="@drawable/ic_profile_circle" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -54,9 +49,7 @@
                         android:textSize="28sp"
                         android:textStyle="bold"
                         android:textColor="#FFFFFF"
-                        android:fontFamily="sans-serif-medium"
-                        android:layout_marginBottom="8dp"
-                        android:letterSpacing="0.02" />
+                        android:layout_marginBottom="6dp"/>
 
                     <TextView
                         android:id="@+id/tvWelcome"
@@ -65,30 +58,33 @@
                         android:text="Welcome back!"
                         android:textSize="16sp"
                         android:textColor="#B0B0B0"
-                        android:layout_marginBottom="20dp" />
+                        android:layout_marginBottom="20dp"/>
 
-                    <!-- Stats Card -->
+                    <!-- ===== ACTIVE ROOMS CARD ===== -->
                     <androidx.cardview.widget.CardView
+                        android:id="@+id/cardActiveRooms"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        app:cardBackgroundColor="#1A1A1A"
-                        app:cardCornerRadius="16dp"
-                        app:cardElevation="0dp"
-                        android:layout_marginTop="8dp">
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        app:cardCornerRadius="18dp"
+                        app:cardElevation="6dp"
+                        app:cardBackgroundColor="#1A1A1A">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:padding="18dp"
                             android:orientation="horizontal"
-                            android:padding="16dp"
                             android:gravity="center_vertical">
 
                             <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
                                 android:text="📚"
-                                android:textSize="24sp"
-                                android:layout_marginEnd="12dp"/>
+                                android:textSize="26sp"
+                                android:layout_marginEnd="12dp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -101,26 +97,25 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="0 Active Rooms"
-                                    android:textSize="18sp"
+                                    android:textSize="19sp"
                                     android:textStyle="bold"
-                                    android:textColor="#FFFFFF" />
+                                    android:textColor="#FFFFFF"/>
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="You're doing great!"
+                                    android:text="Tap to manage your study sessions →"
                                     android:textSize="12sp"
                                     android:textColor="#808080"
-                                    android:layout_marginTop="2dp"/>
+                                    android:layout_marginTop="4dp"/>
 
                             </LinearLayout>
 
                             <ImageView
-                                android:layout_width="32dp"
-                                android:layout_height="32dp"
-                                android:src="@drawable/ic_arrow_right"
-                                android:contentDescription="View rooms"
-                                app:tint="#4CAF50" />
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                android:src="@drawable/ic_arrow_forward"
+                                app:tint="#4CAF50"/>
 
                         </LinearLayout>
 
@@ -130,60 +125,40 @@
 
             </RelativeLayout>
 
-            <!-- Main Content Area -->
+            <!-- ===== MAIN CONTENT ===== -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="20dp"
-                android:paddingTop="24dp">
+                android:paddingTop="28dp">
 
-                <!-- Quick Action Header -->
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="16dp">
+                    android:text="Quick Start"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:layout_marginBottom="16dp"/>
 
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Quick Start"
-                        android:textSize="22sp"
-                        android:textStyle="bold"
-                        android:textColor="#FFFFFF" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Start studying →"
-                        android:textSize="13sp"
-                        android:textColor="#4CAF50"
-                        android:textStyle="bold" />
-
-                </LinearLayout>
-
-                <!-- Main Action Button -->
-                <!-- Main Action Button -->
+                <!-- CREATE / JOIN CARD -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/cardStudyRoom"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:foreground="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true"
-                    app:cardBackgroundColor="#1A1A1A"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="8dp"
-                    android:layout_marginBottom="24dp">
+                    android:foreground="?attr/selectableItemBackground"
+                    app:cardCornerRadius="22dp"
+                    app:cardElevation="10dp"
+                    android:layout_marginBottom="32dp">
 
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="140dp"
                         android:background="@drawable/action_card_gradient"
-                        android:padding="20dp">
+                        android:padding="22dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -192,254 +167,41 @@
                             android:orientation="vertical">
 
                             <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
                                 android:text="🧠"
-                                android:textSize="32sp"
-                                android:layout_marginBottom="8dp" />
+                                android:textSize="34sp"
+                                android:layout_marginBottom="8dp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
 
                             <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
                                 android:text="Create or Join Room"
-                                android:textSize="20sp"
+                                android:textSize="21sp"
                                 android:textStyle="bold"
                                 android:textColor="#FFFFFF"
-                                android:layout_marginBottom="4dp" />
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
 
                             <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Start your study session now"
+                                android:text="Start your study session instantly"
                                 android:textSize="13sp"
-                                android:textColor="#B0B0B0" />
+                                android:textColor="#D0D0D0"
+                                android:layout_marginTop="6dp"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
 
                         </LinearLayout>
 
-                        <!-- Arrow Icon -->
                         <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
+                            android:layout_width="42dp"
+                            android:layout_height="42dp"
                             android:layout_alignParentEnd="true"
                             android:layout_centerVertical="true"
                             android:src="@drawable/ic_arrow_forward"
                             android:background="@drawable/arrow_circle_bg"
                             android:padding="10dp"
-                            app:tint="#FFFFFF"
-                            android:contentDescription="Go" />
+                            app:tint="#FFFFFF"/>
 
                     </RelativeLayout>
-
-                </androidx.cardview.widget.CardView>
-
-                <!-- Features Header -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Features"
-                    android:textSize="22sp"
-                    android:textStyle="bold"
-                    android:textColor="#FFFFFF"
-                    android:layout_marginBottom="16dp" />
-
-                <!-- Feature Card 1: Pomodoro Timer -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:cardBackgroundColor="#1A1A1A"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp"
-                    android:layout_marginBottom="12dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="18dp"
-                        android:gravity="center_vertical">
-
-                        <!-- Icon Background -->
-                        <FrameLayout
-                            android:layout_width="56dp"
-                            android:layout_height="56dp"
-                            android:background="@drawable/feature_icon_bg_red"
-                            android:layout_marginEnd="16dp">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="⏱"
-                                android:textSize="28sp"
-                                android:layout_gravity="center"/>
-
-                        </FrameLayout>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Pomodoro Timer"
-                                android:textSize="17sp"
-                                android:textStyle="bold"
-                                android:textColor="#FFFFFF"/>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Stay focused with 25-min sessions"
-                                android:textSize="13sp"
-                                android:textColor="#808080"
-                                android:layout_marginTop="4dp"/>
-
-                        </LinearLayout>
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_chevron_right"
-                            app:tint="#505050"
-                            android:contentDescription="Open"/>
-
-                    </LinearLayout>
-
-                </androidx.cardview.widget.CardView>
-
-                <!-- Feature Card 2: Group Chat -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:cardBackgroundColor="#1A1A1A"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp"
-                    android:layout_marginBottom="12dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="18dp"
-                        android:gravity="center_vertical">
-
-                        <!-- Icon Background -->
-                        <FrameLayout
-                            android:layout_width="56dp"
-                            android:layout_height="56dp"
-                            android:background="@drawable/feature_icon_bg_blue"
-                            android:layout_marginEnd="16dp">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="💬"
-                                android:textSize="28sp"
-                                android:layout_gravity="center"/>
-
-                        </FrameLayout>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Group Chat"
-                                android:textSize="17sp"
-                                android:textStyle="bold"
-                                android:textColor="#FFFFFF"/>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Discuss and collaborate in real-time"
-                                android:textSize="13sp"
-                                android:textColor="#808080"
-                                android:layout_marginTop="4dp"/>
-
-                        </LinearLayout>
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_chevron_right"
-                            app:tint="#505050"
-                            android:contentDescription="Open"/>
-
-                    </LinearLayout>
-
-                </androidx.cardview.widget.CardView>
-
-                <!-- Feature Card 3: Notes Sharing -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:cardBackgroundColor="#1A1A1A"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp"
-                    android:layout_marginBottom="12dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="18dp"
-                        android:gravity="center_vertical">
-
-                        <!-- Icon Background -->
-                        <FrameLayout
-                            android:layout_width="56dp"
-                            android:layout_height="56dp"
-                            android:background="@drawable/feature_icon_bg_green"
-                            android:layout_marginEnd="16dp">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="📚"
-                                android:textSize="28sp"
-                                android:layout_gravity="center"/>
-
-                        </FrameLayout>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Notes Sharing"
-                                android:textSize="17sp"
-                                android:textStyle="bold"
-                                android:textColor="#FFFFFF"/>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Share PDFs and documents easily"
-                                android:textSize="13sp"
-                                android:textColor="#808080"
-                                android:layout_marginTop="4dp"/>
-
-                        </LinearLayout>
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@drawable/ic_chevron_right"
-                            app:tint="#505050"
-                            android:contentDescription="Open"/>
-
-                    </LinearLayout>
 
                 </androidx.cardview.widget.CardView>
 
@@ -449,8 +211,7 @@
 
     </ScrollView>
 
-    <!-- Bottom Navigation -->
-    <!-- Bottom Navigation - REPLACE THE ENTIRE BOTTOM NAVIGATION SECTION WITH THIS -->
+    <!-- ================= BOTTOM NAV ================= -->
     <LinearLayout
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
@@ -458,110 +219,113 @@
         android:layout_alignParentBottom="true"
         android:orientation="horizontal"
         android:background="#1A1A1A"
-        android:elevation="16dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp">
+        android:elevation="16dp">
 
+        <!-- HOME -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/btnNavHome"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:src="@android:drawable/ic_menu_compass"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:background="@android:color/transparent"
-                android:contentDescription="Home"/>
+                android:src="@android:drawable/ic_menu_compass"
+                app:tint="#4CAF50"/>
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="Home"
                 android:textSize="11sp"
                 android:textColor="#4CAF50"
                 android:textStyle="bold"
-                android:layout_marginTop="6dp"/>
+                android:layout_marginTop="6dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
 
         </LinearLayout>
 
+        <!-- ROOMS -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/btnNavRooms"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:src="@android:drawable/ic_dialog_map"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:background="@android:color/transparent"
-                android:contentDescription="My Rooms"/>
+                android:src="@android:drawable/ic_dialog_map"
+                app:tint="#808080"/>
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="My Rooms"
                 android:textSize="11sp"
                 android:textColor="#808080"
-                android:layout_marginTop="6dp"/>
+                android:layout_marginTop="6dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
 
         </LinearLayout>
 
+        <!-- TASKS -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/btnNavTasks"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:src="@android:drawable/ic_menu_agenda"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:background="@android:color/transparent"
-                android:contentDescription="Tasks"/>
+                android:src="@android:drawable/ic_menu_agenda"
+                app:tint="#808080"/>
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="Tasks"
                 android:textSize="11sp"
                 android:textColor="#808080"
-                android:layout_marginTop="6dp"/>
+                android:layout_marginTop="6dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
 
         </LinearLayout>
 
+        <!-- PROFILE -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/btnNavProfile"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:src="@android:drawable/ic_menu_myplaces"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:background="@android:color/transparent"
-                android:contentDescription="Profile"/>
+                android:src="@android:drawable/ic_menu_myplaces"
+                app:tint="#808080"/>
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="Profile"
                 android:textSize="11sp"
                 android:textColor="#808080"
-                android:layout_marginTop="6dp"/>
+                android:layout_marginTop="6dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
 
         </LinearLayout>
 
     </LinearLayout>
+
 </RelativeLayout>

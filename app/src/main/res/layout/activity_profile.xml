@@ -1,102 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0F0F0F"
-    android:fillViewport="true">
+    android:background="#0F172A">
 
+    <!-- HEADER -->
     <LinearLayout
+        android:id="@+id/headerLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="280dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/premium_header_gradient"
+        android:padding="24dp">
 
-        <!-- HEADER -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="260dp"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="@drawable/header_gradient">
+        <!-- PROFILE IMAGE -->
+        <FrameLayout
+            android:layout_width="120dp"
+            android:layout_height="120dp">
 
             <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/imgProfilePhoto"
-                android:layout_width="110dp"
-                android:layout_height="110dp"
+                android:id="@+id/ivProfileImage"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
                 android:src="@drawable/ic_profile_circle"
+                android:scaleType="centerCrop"
+                android:clickable="true"
+                android:focusable="true"
                 app:civ_border_width="3dp"
                 app:civ_border_color="#FFFFFF"/>
 
-            <TextView
-                android:id="@+id/tvProfileName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="User Name"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                android:layout_marginTop="12dp"/>
+            <!-- Edit Icon -->
+            <ImageView
+                android:id="@+id/ivEditPhoto"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="bottom|end"
+                android:background="@drawable/profile_edit_bg"
+                android:padding="8dp"
+                android:src="@drawable/ic_edit"
+                android:clickable="true"
+                android:focusable="true"
+                app:tint="#FFFFFF"/>
+        </FrameLayout>
 
-            <TextView
-                android:id="@+id/tvProfileEmail"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="email@email.com"
-                android:textColor="#EEEEEE"/>
-
-        </LinearLayout>
-
-        <!-- CONTENT -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <!-- CLICKABLE NAME -->
+        <TextView
+            android:id="@+id/tvProfileName"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="20dp"
-            android:orientation="vertical">
+            android:text="User Name"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="16dp"
+            android:clickable="true"
+            android:focusable="true"/>
 
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardEditProfile"
-                android:layout_width="match_parent"
-                android:layout_height="60dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="6dp"
-                app:cardBackgroundColor="#1A1A1A"
-                android:layout_marginBottom="16dp">
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:padding="18dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Edit Profile"
-                        android:textColor="#FFFFFF"
-                        android:textSize="16sp"
-                        android:textStyle="bold"/>
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:layout_alignParentEnd="true"
-                        android:src="@drawable/ic_arrow_forward"
-                        app:tint="#FFFFFF"/>
-
-                </RelativeLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <Button
-                android:id="@+id/btnLogout"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:text="Logout"
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF"
-                android:backgroundTint="#E53935"/>
-
-        </LinearLayout>
-
+        <TextView
+            android:id="@+id/tvProfileEmail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="user@email.com"
+            android:textSize="14sp"
+            android:textColor="#E0E0E0"
+            android:layout_marginTop="4dp"/>
     </LinearLayout>
 
-</ScrollView>
+    <!-- LOGOUT -->
+    <Button
+        android:id="@+id/btnLogout"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="24dp"
+        android:text="Logout"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:backgroundTint="#D32F2F"/>
+
+    <!-- LOADING -->
+    <ProgressBar
+        android:id="@+id/progressBarProfile"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_centerInParent="true"
+        android:visibility="gone"/>
+
+</RelativeLayout>

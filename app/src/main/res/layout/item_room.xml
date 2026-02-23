@@ -1,19 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardRoom"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp">
+    android:layout_marginBottom="16dp"
+    android:foreground="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="8dp"
+    app:cardBackgroundColor="#1A2133">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="20dp">
 
-        <!-- Room Header -->
+        <!-- HEADER ROW -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -28,30 +34,34 @@
                 android:text="Room: ABC123"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:textColor="#2C3E50"/>
+                android:textColor="#FFFFFF"/>
 
             <TextView
                 android:id="@+id/tvHostBadge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="👑 HOST"
-                android:textSize="12sp"
-                android:textColor="#FFFFFF"
-                android:background="@drawable/host_badge_background"
-                android:padding="6dp"
+                android:text="HOST"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:background="@drawable/host_badge_premium"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
                 android:visibility="gone"/>
 
         </LinearLayout>
 
-        <!-- Room Info -->
+        <!-- MEMBER + DATE -->
         <TextView
             android:id="@+id/tvMemberCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="👥 5 members"
             android:textSize="14sp"
-            android:textColor="#7F8C8D"
-            android:layout_marginTop="8dp"/>
+            android:textColor="#B0BEC5"
+            android:layout_marginTop="10dp"/>
 
         <TextView
             android:id="@+id/tvCreatedDate"
@@ -59,19 +69,51 @@
             android:layout_height="wrap_content"
             android:text="Created: Jan 01, 2024"
             android:textSize="12sp"
-            android:textColor="#95A5A6"
+            android:textColor="#78909C"
             android:layout_marginTop="4dp"/>
 
-        <!-- Delete Button (Only for Host) -->
+        <!-- DIVIDER -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#263238"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- FOOTER ROW -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Tap to enter room"
+                android:textSize="13sp"
+                android:textColor="#4CAF50"/>
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_chevron_right"
+                android:contentDescription="Enter"
+                app:tint="#4CAF50" />
+        </LinearLayout>
+
+        <!-- DELETE BUTTON (Host Only) -->
         <Button
             android:id="@+id/btnDeleteRoom"
             android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:text="🗑️ Delete Room"
+            android:layout_height="42dp"
+            android:text="Delete Room"
             android:textSize="14sp"
-            android:backgroundTint="#E74C3C"
+            android:textStyle="bold"
+            android:backgroundTint="#D32F2F"
             android:textColor="#FFFFFF"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="14dp"
             android:visibility="gone"/>
 
     </LinearLayout>

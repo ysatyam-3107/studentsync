@@ -1,134 +1,229 @@
 package com.example.studysync;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 
-import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.*;
 
 import com.bumptech.glide.Glide;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.cloudinary.android.MediaManager;
+import com.cloudinary.android.callback.UploadCallback;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
+
+import java.util.Map;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class ProfileActivity extends AppCompatActivity {
 
+    private CircleImageView ivProfileImage;
+    private ImageView ivEditPhoto;
     private TextView tvProfileName, tvProfileEmail;
-    private ImageView imgProfilePhoto;
     private Button btnLogout;
-    private CardView cardEditProfile;
+    private ProgressBar progressBar;
 
     private FirebaseAuth auth;
     private DatabaseReference userRef;
+
+    private Uri selectedImageUri;
+    private String currentName = "";
+
+    private ActivityResultLauncher<String> imagePicker;
+
+    private static final String UPLOAD_PRESET = "studysync_profiles";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
+        initViews();
+        initFirebase();
+        setupImagePicker();
+        loadProfile();
+        setupClicks();
+    }
+
+    private void initViews() {
+        ivProfileImage = findViewById(R.id.ivProfileImage);
+        ivEditPhoto = findViewById(R.id.ivEditPhoto);
         tvProfileName = findViewById(R.id.tvProfileName);
         tvProfileEmail = findViewById(R.id.tvProfileEmail);
-        imgProfilePhoto = findViewById(R.id.imgProfilePhoto);
         btnLogout = findViewById(R.id.btnLogout);
-        cardEditProfile = findViewById(R.id.cardEditProfile);
+        progressBar = findViewById(R.id.progressBarProfile);
+    }
 
+    private void initFirebase() {
         auth = FirebaseAuth.getInstance();
-        FirebaseUser user = auth.getCurrentUser();
-
-        if (user == null) {
-            finish();
-            return;
-        }
-
+        String uid = auth.getCurrentUser().getUid();
         userRef = FirebaseDatabase.getInstance()
                 .getReference("Users")
-                .child(user.getUid());
+                .child(uid);
+    }
 
-        loadUserProfile();
+    private void setupImagePicker() {
+        imagePicker = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null) {
+                        selectedImageUri = uri;
+                        uploadToCloudinary();
+                    }
+                });
+    }
 
-        cardEditProfile.setOnClickListener(v -> showEditProfileBottomSheet());
+    private void setupClicks() {
+
+        tvProfileName.setOnClickListener(v -> showEditNameDialog());
+
+        ivProfileImage.setOnClickListener(v ->
+                imagePicker.launch("image/*"));
+
+        ivEditPhoto.setOnClickListener(v ->
+                imagePicker.launch("image/*"));
 
         btnLogout.setOnClickListener(v -> {
             auth.signOut();
-            Intent intent = new Intent(this, LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
             finish();
         });
     }
 
-    private void loadUserProfile() {
+    private void loadProfile() {
+        progressBar.setVisibility(View.VISIBLE);
 
-        userRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
+        userRef.addListenerForSingleValueEvent(
+                new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
 
-                if (snapshot.exists()) {
+                        progressBar.setVisibility(View.GONE);
 
-                    String name = snapshot.child("name").getValue(String.class);
-                    String email = snapshot.child("email").getValue(String.class);
-                    String photoUrl = snapshot.child("photoUrl").getValue(String.class);
+                        currentName = snapshot.child("name")
+                                .getValue(String.class);
 
-                    tvProfileName.setText(name != null ? name : "User");
-                    tvProfileEmail.setText(email != null ? email :
-                            auth.getCurrentUser().getEmail());
+                        String email = snapshot.child("email")
+                                .getValue(String.class);
 
-                    if (photoUrl != null && !photoUrl.isEmpty()) {
-                        Glide.with(ProfileActivity.this)
-                                .load(photoUrl)
-                                .into(imgProfilePhoto);
+                        String photoUrl = snapshot.child("photoUrl")
+                                .getValue(String.class);
+
+                        tvProfileName.setText(
+                                currentName != null ?
+                                        currentName : "User");
+
+                        tvProfileEmail.setText(
+                                email != null ?
+                                        email :
+                                        auth.getCurrentUser().getEmail());
+
+                        if (photoUrl != null && !photoUrl.isEmpty()) {
+                            Glide.with(ProfileActivity.this)
+                                    .load(photoUrl)
+                                    .into(ivProfileImage);
+                        }
                     }
-                }
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(ProfileActivity.this,
-                        "Failed to load profile",
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        progressBar.setVisibility(View.GONE);
+                    }
+                });
     }
 
-    private void showEditProfileBottomSheet() {
+    private void showEditNameDialog() {
 
-        BottomSheetDialog dialog =
-                new BottomSheetDialog(this);
+        View view = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_edit_name, null);
 
-        View view = getLayoutInflater()
-                .inflate(R.layout.bottom_sheet_edit_profile, null);
+        EditText etNewName = view.findViewById(R.id.etNewName);
+        etNewName.setText(currentName);
 
-        EditText etEditName =
-                view.findViewById(R.id.etEditName);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(view)
+                .create();
 
-        Button btnSave =
-                view.findViewById(R.id.btnSaveProfile);
+        view.findViewById(R.id.btnSaveName)
+                .setOnClickListener(v -> {
 
-        dialog.setContentView(view);
+                    String newName = etNewName.getText()
+                            .toString()
+                            .trim();
+
+                    if (TextUtils.isEmpty(newName)) {
+                        etNewName.setError("Enter valid name");
+                        return;
+                    }
+
+                    userRef.child("name")
+                            .setValue(newName)
+                            .addOnSuccessListener(aVoid -> {
+                                tvProfileName.setText(newName);
+                                currentName = newName;
+                                dialog.dismiss();
+                                Toast.makeText(this,
+                                        "Name updated",
+                                        Toast.LENGTH_SHORT).show();
+                            });
+                });
+
+        view.findViewById(R.id.btnCancelName)
+                .setOnClickListener(v -> dialog.dismiss());
+
         dialog.show();
-
-        btnSave.setOnClickListener(v -> {
-
-            String newName =
-                    etEditName.getText().toString().trim();
-
-            if (TextUtils.isEmpty(newName)) {
-                etEditName.setError("Name cannot be empty");
-                return;
-            }
-
-            userRef.child("name").setValue(newName)
-                    .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(this,
-                                "Profile Updated",
-                                Toast.LENGTH_SHORT).show();
-                        dialog.dismiss();
-                    });
-        });
     }
-}
+
+    private void uploadToCloudinary() {
+
+        progressBar.setVisibility(View.VISIBLE);
+
+        MediaManager.get().upload(selectedImageUri)
+                .unsigned("studysync_profiles")
+                .callback(new UploadCallback() {
+
+                    @Override
+                    public void onStart(String requestId) { }
+
+                    @Override
+                    public void onProgress(String requestId, long bytes, long totalBytes) { }
+
+                    @Override
+                    public void onSuccess(String requestId, Map resultData) {
+
+                        String imageUrl = resultData.get("secure_url").toString();
+
+                        userRef.child("photoUrl").setValue(imageUrl);
+
+                        Glide.with(ProfileActivity.this)
+                                .load(imageUrl)
+                                .into(ivProfileImage);
+
+                        progressBar.setVisibility(View.GONE);
+
+                        Toast.makeText(ProfileActivity.this,
+                                "Photo updated",
+                                Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(String requestId, com.cloudinary.android.callback.ErrorInfo error) {
+
+                        progressBar.setVisibility(View.GONE);
+
+                        Toast.makeText(ProfileActivity.this,
+                                "Upload failed: " + error.getDescription(),
+                                Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onReschedule(String requestId, com.cloudinary.android.callback.ErrorInfo error) { }
+
+                });}}
