@@ -57,7 +57,7 @@ public class NotesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notes);
 
-        // ✅ Initialize Cloudinary
+        // Initialize Cloudinary safely (won't crash if already initialized)
         initCloudinary();
 
         rvNotes = findViewById(R.id.rvNotes);
@@ -135,21 +135,13 @@ public class NotesActivity extends AppCompatActivity {
     }
 
     /**
-     * Initialize Cloudinary with your credentials
-     */
-    /**
-     * Initialize Cloudinary with your credentials
+     * Uses CloudinaryManager which safely handles already-initialized state.
+     * CloudinaryManager now includes api_key + api_secret for signed uploads.
      */
     private void initCloudinary() {
-        Map<String, String> config = new HashMap<>();
-        config.put("cloud_name", CloudinaryConfig.CLOUD_NAME);
-        config.put("api_key", CloudinaryConfig.API_KEY);
-        config.put("api_secret", CloudinaryConfig.API_SECRET);
-
         try {
-            MediaManager.init(this, config);
+            CloudinaryManager.init(this);
             Log.d(TAG, "✅ Cloudinary initialized successfully");
-            Log.d(TAG, "Cloud Name: " + CloudinaryConfig.CLOUD_NAME);
         } catch (Exception e) {
             Log.e(TAG, "❌ Cloudinary initialization failed", e);
             Toast.makeText(this,
@@ -186,7 +178,6 @@ public class NotesActivity extends AppCompatActivity {
     private void uploadFile(Uri fileUri) {
         Log.d(TAG, "=== STARTING CLOUDINARY UPLOAD ===");
 
-        // Validate file size
         long fileSize = getFileSize(fileUri);
         Log.d(TAG, "File size: " + fileSize + " bytes");
 
@@ -207,9 +198,10 @@ public class NotesActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         btnUploadNote.setEnabled(false);
 
+        // FIX: Trim filename to prevent whitespace issues
         String tempFileName = getFileName(fileUri);
         final String fileName = (tempFileName != null)
-                ? tempFileName
+                ? tempFileName.trim()
                 : "file_" + System.currentTimeMillis();
 
         Log.d(TAG, "File name: " + fileName);
@@ -225,13 +217,20 @@ public class NotesActivity extends AppCompatActivity {
         String fileType = detectFileType(fileUri, fileName);
         Log.d(TAG, "File type: " + fileType);
 
-        // Upload to Cloudinary
         String folderPath = "studysync/" + roomCode;
 
+        // FIX: Sanitize public_id — strip spaces and special chars, replace with underscores
+        String sanitizedName = getFileNameWithoutExtension(fileName)
+                .replaceAll("\\s+", "_")
+                .replaceAll("[^a-zA-Z0-9_\\-]", "");
+
+        String publicId = noteId + "_" + sanitizedName;
+        Log.d(TAG, "Public ID: " + publicId);
+
         MediaManager.get().upload(fileUri)
-                .option("resource_type", "auto")  // Auto-detect file type
-                .option("folder", folderPath)     // Organize by room
-                .option("public_id", noteId + "_" + getFileNameWithoutExtension(fileName))
+                .option("resource_type", "auto")
+                .option("folder", folderPath)
+                .option("public_id", publicId)
                 .callback(new UploadCallback() {
                     @Override
                     public void onStart(String requestId) {
@@ -351,15 +350,11 @@ public class NotesActivity extends AppCompatActivity {
             return;
         }
 
-        // Delete from database
         notesRef.child(note.getId()).removeValue()
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(this,
                             "Note deleted successfully",
                             Toast.LENGTH_SHORT).show();
-
-                    // Note: Cloudinary file deletion requires admin API
-                    // For now, files remain in Cloudinary (won't affect functionality)
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this,
@@ -383,10 +378,12 @@ public class NotesActivity extends AppCompatActivity {
         return null;
     }
 
+    // FIX: Trim to prevent trailing whitespace in public_id
     private String getFileNameWithoutExtension(String fileName) {
         if (fileName == null) return "file";
+        fileName = fileName.trim();
         int lastDot = fileName.lastIndexOf('.');
-        return (lastDot > 0) ? fileName.substring(0, lastDot) : fileName;
+        return (lastDot > 0) ? fileName.substring(0, lastDot).trim() : fileName;
     }
 
     private long getFileSize(Uri uri) {
