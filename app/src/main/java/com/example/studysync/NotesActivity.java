@@ -57,9 +57,6 @@ public class NotesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notes);
 
-        // Initialize Cloudinary safely (won't crash if already initialized)
-        initCloudinary();
-
         rvNotes = findViewById(R.id.rvNotes);
         btnUploadNote = findViewById(R.id.btnUploadNote);
         progressBar = findViewById(R.id.progressBarNotes);
@@ -134,21 +131,6 @@ public class NotesActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Uses CloudinaryManager which safely handles already-initialized state.
-     * CloudinaryManager now includes api_key + api_secret for signed uploads.
-     */
-    private void initCloudinary() {
-        try {
-            CloudinaryManager.init(this);
-            Log.d(TAG, "✅ Cloudinary initialized successfully");
-        } catch (Exception e) {
-            Log.e(TAG, "❌ Cloudinary initialization failed", e);
-            Toast.makeText(this,
-                    "Cloud storage setup failed: " + e.getMessage(),
-                    Toast.LENGTH_LONG).show();
-        }
-    }
 
     private void loadNotes() {
         notesRef.addValueEventListener(new ValueEventListener() {

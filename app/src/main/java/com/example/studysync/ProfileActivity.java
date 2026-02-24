@@ -39,12 +39,13 @@ public class ProfileActivity extends AppCompatActivity {
 
     private ActivityResultLauncher<String> imagePicker;
 
-    private static final String UPLOAD_PRESET = "studysync_profiles";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
+
+        // ✅ Initialize Cloudinary here too — in case user lands on
+        // ProfileActivity directly without going through NotesActivity first
 
         initViews();
         initFirebase();
@@ -55,11 +56,11 @@ public class ProfileActivity extends AppCompatActivity {
 
     private void initViews() {
         ivProfileImage = findViewById(R.id.ivProfileImage);
-        ivEditPhoto = findViewById(R.id.ivEditPhoto);
-        tvProfileName = findViewById(R.id.tvProfileName);
+        ivEditPhoto    = findViewById(R.id.ivEditPhoto);
+        tvProfileName  = findViewById(R.id.tvProfileName);
         tvProfileEmail = findViewById(R.id.tvProfileEmail);
-        btnLogout = findViewById(R.id.btnLogout);
-        progressBar = findViewById(R.id.progressBarProfile);
+        btnLogout      = findViewById(R.id.btnLogout);
+        progressBar    = findViewById(R.id.progressBarProfile);
     }
 
     private void initFirebase() {
@@ -82,7 +83,6 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void setupClicks() {
-
         tvProfileName.setOnClickListener(v -> showEditNameDialog());
 
         ivProfileImage.setOnClickListener(v ->
@@ -100,47 +100,33 @@ public class ProfileActivity extends AppCompatActivity {
     private void loadProfile() {
         progressBar.setVisibility(View.VISIBLE);
 
-        userRef.addListenerForSingleValueEvent(
-                new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                progressBar.setVisibility(View.GONE);
 
-                        progressBar.setVisibility(View.GONE);
+                currentName = snapshot.child("name").getValue(String.class);
+                String email    = snapshot.child("email").getValue(String.class);
+                String photoUrl = snapshot.child("photoUrl").getValue(String.class);
 
-                        currentName = snapshot.child("name")
-                                .getValue(String.class);
+                tvProfileName.setText(currentName != null ? currentName : "User");
+                tvProfileEmail.setText(email != null ? email : auth.getCurrentUser().getEmail());
 
-                        String email = snapshot.child("email")
-                                .getValue(String.class);
+                if (photoUrl != null && !photoUrl.isEmpty()) {
+                    Glide.with(ProfileActivity.this)
+                            .load(photoUrl)
+                            .into(ivProfileImage);
+                }
+            }
 
-                        String photoUrl = snapshot.child("photoUrl")
-                                .getValue(String.class);
-
-                        tvProfileName.setText(
-                                currentName != null ?
-                                        currentName : "User");
-
-                        tvProfileEmail.setText(
-                                email != null ?
-                                        email :
-                                        auth.getCurrentUser().getEmail());
-
-                        if (photoUrl != null && !photoUrl.isEmpty()) {
-                            Glide.with(ProfileActivity.this)
-                                    .load(photoUrl)
-                                    .into(ivProfileImage);
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        progressBar.setVisibility(View.GONE);
-                    }
-                });
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                progressBar.setVisibility(View.GONE);
+            }
+        });
     }
 
     private void showEditNameDialog() {
-
         View view = LayoutInflater.from(this)
                 .inflate(R.layout.dialog_edit_name, null);
 
@@ -151,29 +137,22 @@ public class ProfileActivity extends AppCompatActivity {
                 .setView(view)
                 .create();
 
-        view.findViewById(R.id.btnSaveName)
-                .setOnClickListener(v -> {
+        view.findViewById(R.id.btnSaveName).setOnClickListener(v -> {
+            String newName = etNewName.getText().toString().trim();
 
-                    String newName = etNewName.getText()
-                            .toString()
-                            .trim();
+            if (TextUtils.isEmpty(newName)) {
+                etNewName.setError("Enter valid name");
+                return;
+            }
 
-                    if (TextUtils.isEmpty(newName)) {
-                        etNewName.setError("Enter valid name");
-                        return;
-                    }
-
-                    userRef.child("name")
-                            .setValue(newName)
-                            .addOnSuccessListener(aVoid -> {
-                                tvProfileName.setText(newName);
-                                currentName = newName;
-                                dialog.dismiss();
-                                Toast.makeText(this,
-                                        "Name updated",
-                                        Toast.LENGTH_SHORT).show();
-                            });
-                });
+            userRef.child("name").setValue(newName)
+                    .addOnSuccessListener(aVoid -> {
+                        tvProfileName.setText(newName);
+                        currentName = newName;
+                        dialog.dismiss();
+                        Toast.makeText(this, "Name updated", Toast.LENGTH_SHORT).show();
+                    });
+        });
 
         view.findViewById(R.id.btnCancelName)
                 .setOnClickListener(v -> dialog.dismiss());
@@ -182,11 +161,10 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void uploadToCloudinary() {
-
         progressBar.setVisibility(View.VISIBLE);
 
         MediaManager.get().upload(selectedImageUri)
-                .unsigned("studysync_profiles")
+                .unsigned("studysync_profiles")  // unsigned preset — only needs cloud_name
                 .callback(new UploadCallback() {
 
                     @Override
@@ -197,7 +175,6 @@ public class ProfileActivity extends AppCompatActivity {
 
                     @Override
                     public void onSuccess(String requestId, Map resultData) {
-
                         String imageUrl = resultData.get("secure_url").toString();
 
                         userRef.child("photoUrl").setValue(imageUrl);
@@ -209,21 +186,22 @@ public class ProfileActivity extends AppCompatActivity {
                         progressBar.setVisibility(View.GONE);
 
                         Toast.makeText(ProfileActivity.this,
-                                "Photo updated",
-                                Toast.LENGTH_SHORT).show();
+                                "Photo updated", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
-                    public void onError(String requestId, com.cloudinary.android.callback.ErrorInfo error) {
-
+                    public void onError(String requestId,
+                                        com.cloudinary.android.callback.ErrorInfo error) {
                         progressBar.setVisibility(View.GONE);
-
                         Toast.makeText(ProfileActivity.this,
                                 "Upload failed: " + error.getDescription(),
                                 Toast.LENGTH_LONG).show();
                     }
 
                     @Override
-                    public void onReschedule(String requestId, com.cloudinary.android.callback.ErrorInfo error) { }
-
-                });}}
+                    public void onReschedule(String requestId,
+                                             com.cloudinary.android.callback.ErrorInfo error) { }
+                })
+                .dispatch();
+    }
+}
