@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark circle button for primary controls (Mute, Camera) -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#40FFFFFF">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#1E2A40"/>
+            <stroke android:color="#2A3A55" android:width="1.5dp"/>
+        </shape>
+    </item>
+</ripple>

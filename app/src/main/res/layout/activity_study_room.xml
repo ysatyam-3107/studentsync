@@ -7,18 +7,7 @@
     android:background="#0F0F0F"
     tools:context=".StudyRoomActivity">
 
-    <!-- Back Button -->
-    <ImageButton
-        android:id="@+id/btnBack"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_arrow_back"
-        android:background="@drawable/back_button_bg"
-        android:contentDescription="Back"
-        app:tint="#FFFFFF" />
-
-    <!-- Main Content -->
+    <!-- Main Content - No Back Button -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -154,14 +143,10 @@
         </LinearLayout>
 
         <!-- Create Room Button -->
-        <!-- Create Room Button -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardCreateRoom"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
             app:cardBackgroundColor="#1A1A1A"
             app:cardCornerRadius="20dp"
             app:cardElevation="8dp">

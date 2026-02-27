@@ -9,7 +9,9 @@
 
     <!-- Internet (Firebase + Agora) -->
     <uses-permission android:name="android.permission.INTERNET"/>
-
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Storage (ONLY what you need) -->
     <!-- For file picker + Firebase upload -->
     <uses-permission

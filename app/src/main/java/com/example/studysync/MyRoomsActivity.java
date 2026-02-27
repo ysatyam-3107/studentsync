@@ -33,7 +33,6 @@ public class MyRoomsActivity extends AppCompatActivity {
 
     private FirebaseAuth auth;
     private DatabaseReference roomsRef;
-
     private ValueEventListener roomsListener;
 
     @Override
@@ -42,7 +41,6 @@ public class MyRoomsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_my_rooms);
 
         auth = FirebaseAuth.getInstance();
-
         if (auth.getCurrentUser() == null) {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
@@ -54,41 +52,34 @@ public class MyRoomsActivity extends AppCompatActivity {
         initFirebase();
         loadMyRooms();
         animateHeader();
+
+        // ✅ Persistent navbar — marks "Rooms" tab as active
+        Bottomnavhelper.setup(this, Bottomnavhelper.Tab.ROOMS);
     }
 
     private void initViews() {
-        rvMyRooms = findViewById(R.id.rvMyRooms);
-        emptyLayout = findViewById(R.id.emptyLayout);
+        rvMyRooms    = findViewById(R.id.rvMyRooms);
+        emptyLayout  = findViewById(R.id.emptyLayout);
         headerLayout = findViewById(R.id.headerLayout);
         fabCreateRoom = findViewById(R.id.fabCreateRoom);
 
-        fabCreateRoom.setOnClickListener(v -> {
-            startActivity(new Intent(this, StudyRoomActivity.class));
-        });
+        fabCreateRoom.setOnClickListener(v ->
+                startActivity(new Intent(this, StudyRoomActivity.class)));
     }
 
     private void initRecycler() {
         adapter = new MyRoomsAdapter(this, roomsList,
                 new MyRoomsAdapter.OnRoomClickListener() {
-
-                    @Override
-                    public void onRoomClick(RoomInfo room) {
-                        Intent intent = new Intent(
-                                MyRoomsActivity.this,
+                    @Override public void onRoomClick(RoomInfo room) {
+                        Intent intent = new Intent(MyRoomsActivity.this,
                                 StudyRoomInsideActivity.class);
                         intent.putExtra("roomCode", room.getRoomCode());
                         startActivity(intent);
                     }
-
-                    @Override
-                    public void onDeleteClick(RoomInfo room) {
-                        if (room.isHost()) {
-                            showDeleteDialog(room);
-                        } else {
-                            Toast.makeText(MyRoomsActivity.this,
-                                    "Only host can delete room",
-                                    Toast.LENGTH_SHORT).show();
-                        }
+                    @Override public void onDeleteClick(RoomInfo room) {
+                        if (room.isHost()) showDeleteDialog(room);
+                        else Toast.makeText(MyRoomsActivity.this,
+                                "Only host can delete room", Toast.LENGTH_SHORT).show();
                     }
                 });
 
@@ -101,113 +92,66 @@ public class MyRoomsActivity extends AppCompatActivity {
     }
 
     private void loadMyRooms() {
-
         String uid = auth.getCurrentUser().getUid();
-
-        roomsListener = roomsRef.addValueEventListener(
-                new ValueEventListener() {
-
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-
-                        roomsList.clear();
-
-                        for (DataSnapshot roomSnap : snapshot.getChildren()) {
-
-                            if (!roomSnap.child("members").hasChild(uid))
-                                continue;
-
-                            String roomCode = roomSnap.getKey();
-                            String creatorId = roomSnap.child("createdBy")
-                                    .getValue(String.class);
-
-                            Long timestamp = roomSnap.child("createdAt")
-                                    .getValue(Long.class);
-
-                            int memberCount = (int)
-                                    roomSnap.child("members")
-                                            .getChildrenCount();
-
-                            boolean isHost = uid.equals(creatorId);
-
-                            RoomInfo room = new RoomInfo(
-                                    roomCode,
-                                    memberCount,
-                                    timestamp != null ? timestamp : 0,
-                                    isHost
-                            );
-
-                            roomsList.add(room);
-                        }
-
-                        Collections.sort(roomsList,
-                                (r1, r2) ->
-                                        Long.compare(r2.getCreatedAt(),
-                                                r1.getCreatedAt()));
-
-                        adapter.notifyDataSetChanged();
-
-                        if (roomsList.isEmpty()) {
-                            emptyLayout.setVisibility(View.VISIBLE);
-                            rvMyRooms.setVisibility(View.GONE);
-                        } else {
-                            emptyLayout.setVisibility(View.GONE);
-                            rvMyRooms.setVisibility(View.VISIBLE);
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Toast.makeText(MyRoomsActivity.this,
-                                "Failed to load rooms",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                });
+        roomsListener = roomsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                roomsList.clear();
+                for (DataSnapshot roomSnap : snapshot.getChildren()) {
+                    if (!roomSnap.child("members").hasChild(uid)) continue;
+                    String  roomCode   = roomSnap.getKey();
+                    String  creatorId  = roomSnap.child("createdBy").getValue(String.class);
+                    Long    timestamp  = roomSnap.child("createdAt").getValue(Long.class);
+                    int     members    = (int) roomSnap.child("members").getChildrenCount();
+                    boolean isHost     = uid.equals(creatorId);
+                    roomsList.add(new RoomInfo(roomCode, members,
+                            timestamp != null ? timestamp : 0, isHost));
+                }
+                Collections.sort(roomsList,
+                        (r1, r2) -> Long.compare(r2.getCreatedAt(), r1.getCreatedAt()));
+                adapter.notifyDataSetChanged();
+                emptyLayout.setVisibility(roomsList.isEmpty() ? View.VISIBLE : View.GONE);
+                rvMyRooms.setVisibility(roomsList.isEmpty() ? View.GONE : View.VISIBLE);
+            }
+            @Override public void onCancelled(@NonNull DatabaseError e) {
+                Toast.makeText(MyRoomsActivity.this, "Failed to load rooms",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void showDeleteDialog(RoomInfo room) {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Room")
                 .setMessage("Delete room " + room.getRoomCode() + "?")
-                .setPositiveButton("Delete",
-                        (dialog, which) ->
-                                deleteRoom(room.getRoomCode()))
+                .setPositiveButton("Delete", (d, w) -> deleteRoom(room.getRoomCode()))
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
     private void deleteRoom(String roomCode) {
-
-        roomsRef.child(roomCode).removeValue()
-                .addOnSuccessListener(aVoid -> {
-                    FirebaseDatabase.getInstance()
-                            .getReference("Messages")
-                            .child(roomCode).removeValue();
-
-                    FirebaseDatabase.getInstance()
-                            .getReference("Notes")
-                            .child(roomCode).removeValue();
-
-                    Toast.makeText(this,
-                            "Room deleted",
-                            Toast.LENGTH_SHORT).show();
-                });
+        roomsRef.child(roomCode).removeValue().addOnSuccessListener(aVoid -> {
+            FirebaseDatabase.getInstance().getReference("Messages").child(roomCode).removeValue();
+            FirebaseDatabase.getInstance().getReference("Notes").child(roomCode).removeValue();
+            Toast.makeText(this, "Room deleted", Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void animateHeader() {
+        if (headerLayout == null) return;
         headerLayout.setTranslationY(-200f);
-        ObjectAnimator animator =
-                ObjectAnimator.ofFloat(headerLayout,
-                        "translationY", -200f, 0f);
-        animator.setDuration(700);
-        animator.setInterpolator(new DecelerateInterpolator());
-        animator.start();
+        ObjectAnimator.ofFloat(headerLayout, "translationY", -200f, 0f)
+                .setDuration(700)
+                .start();
+        headerLayout.animate().translationY(0f)
+                .setDuration(700)
+                .setInterpolator(new DecelerateInterpolator())
+                .start();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (roomsListener != null)
-            roomsRef.removeEventListener(roomsListener);
+        if (roomsListener != null) roomsRef.removeEventListener(roomsListener);
     }
 }

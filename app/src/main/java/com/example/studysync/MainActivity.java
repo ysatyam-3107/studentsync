@@ -4,16 +4,15 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
-import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
@@ -26,7 +25,8 @@ public class MainActivity extends AppCompatActivity {
     private ImageView ivProfile;
     private CardView cardStudyRoom;
 
-    private ImageButton btnNavHome, btnNavRooms, btnNavTasks, btnNavProfile;
+    // ✅ NO btnNavHome/btnNavRooms/btnNavTasks/btnNavProfile fields
+    // — all nav is handled by BottomNavHelper using layout_bottom_nav.xml IDs
 
     private FirebaseAuth auth;
     private DatabaseReference roomsRef;
@@ -47,128 +47,107 @@ public class MainActivity extends AppCompatActivity {
 
         initViews();
         setGreeting(user.getUid());
+        loadUserPhoto(user.getUid());
         loadRoomCount(user.getUid());
-        setupClickListeners();
         animateEntrance();
+
+        // ✅ Single line — persistent animated navbar, HOME tab highlighted
+        Bottomnavhelper.setup(this, Bottomnavhelper.Tab.HOME);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        FirebaseUser user = auth.getCurrentUser();
+        if (user != null) loadUserPhoto(user.getUid());
     }
 
     private void initViews() {
-        tvWelcome = findViewById(R.id.tvWelcome);
-        tvRoomCount = findViewById(R.id.tvRoomCount);
-        ivProfile = findViewById(R.id.ivProfile);
+        tvWelcome     = findViewById(R.id.tvWelcome);
+        tvRoomCount   = findViewById(R.id.tvRoomCount);
+        ivProfile     = findViewById(R.id.ivProfile);
         cardStudyRoom = findViewById(R.id.cardStudyRoom);
 
-        btnNavHome = findViewById(R.id.btnNavHome);
-        btnNavRooms = findViewById(R.id.btnNavRooms);
-        btnNavTasks = findViewById(R.id.btnNavTasks);
-        btnNavProfile = findViewById(R.id.btnNavProfile);
+        // Profile photo tap → ProfileActivity
+        ivProfile.setOnClickListener(v ->
+                startActivity(new Intent(this, ProfileActivity.class)));
     }
 
-    /* ------------------- GREETING SYSTEM ------------------- */
+    private void loadUserPhoto(String uid) {
+        FirebaseDatabase.getInstance()
+                .getReference("Users").child(uid)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String photoUrl = snapshot.child("photoUrl").getValue(String.class);
+                        if (photoUrl != null && !photoUrl.isEmpty()) {
+                            Glide.with(MainActivity.this)
+                                    .load(photoUrl)
+                                    .transform(new CircleCrop())
+                                    .placeholder(R.drawable.ic_profile_circle)
+                                    .error(R.drawable.ic_profile_circle)
+                                    .into(ivProfile);
+                        } else {
+                            ivProfile.setImageResource(R.drawable.ic_profile_circle);
+                        }
+                    }
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        ivProfile.setImageResource(R.drawable.ic_profile_circle);
+                    }
+                });
+    }
 
     private void setGreeting(String uid) {
-
-        DatabaseReference userRef = FirebaseDatabase.getInstance()
-                .getReference("Users").child(uid);
-
-        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-
-                String name = snapshot.child("name").getValue(String.class);
-                if (name == null) name = "User";
-
-                Calendar calendar = Calendar.getInstance();
-                int hour = calendar.get(Calendar.HOUR_OF_DAY);
-
-                String greeting;
-
-                if (hour < 12) {
-                    greeting = "Good Morning";
-                } else if (hour < 17) {
-                    greeting = "Good Afternoon";
-                } else {
-                    greeting = "Good Evening";
-                }
-
-                tvWelcome.setText(greeting + ", " + name + " 👋");
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
-        });
+        FirebaseDatabase.getInstance()
+                .getReference("Users").child(uid)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String name = snapshot.child("name").getValue(String.class);
+                        if (name == null) name = "User";
+                        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+                        String g = hour < 12 ? "Good Morning"
+                                : hour < 17 ? "Good Afternoon"
+                                : "Good Evening";
+                        tvWelcome.setText(g + ", " + name + " 👋");
+                    }
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
+                });
     }
 
-    /* ------------------- ROOM COUNT WITH ANIMATION ------------------- */
-
     private void loadRoomCount(String uid) {
-
         roomsRef = FirebaseDatabase.getInstance().getReference("Rooms");
-
         roomsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-
                 int count = 0;
-
                 for (DataSnapshot room : snapshot.getChildren()) {
-                    if (room.child("members").hasChild(uid)) {
-                        count++;
-                    }
+                    if (room.child("members").hasChild(uid)) count++;
                 }
-
                 animateRoomCounter(count);
-
-                // Make card clickable to open MyRooms
-                cardStudyRoom.setOnClickListener(v -> {
-                    startActivity(new Intent(MainActivity.this, MyRoomsActivity.class));
-                });
+                cardStudyRoom.setOnClickListener(v ->
+                        startActivity(new Intent(MainActivity.this, StudyRoomActivity.class)));
             }
-
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
 
     private void animateRoomCounter(int finalCount) {
-
-        ValueAnimator animator = ValueAnimator.ofInt(0, finalCount);
-        animator.setDuration(800);
-
-        animator.addUpdateListener(animation -> {
-            int value = (int) animation.getAnimatedValue();
-            tvRoomCount.setText(value + " Active Room" + (value != 1 ? "s" : ""));
+        ValueAnimator anim = ValueAnimator.ofInt(0, finalCount);
+        anim.setDuration(800);
+        anim.addUpdateListener(a -> {
+            int v = (int) a.getAnimatedValue();
+            tvRoomCount.setText(v + " Active Room" + (v != 1 ? "s" : ""));
         });
-
-        animator.start();
+        anim.start();
     }
-
-    /* ------------------- CLICK LISTENERS ------------------- */
-
-    private void setupClickListeners() {
-
-        ivProfile.setOnClickListener(v ->
-                startActivity(new Intent(this, ProfileActivity.class)));
-
-        btnNavHome.setOnClickListener(v -> {});
-
-        btnNavRooms.setOnClickListener(v ->
-                startActivity(new Intent(this, MyRoomsActivity.class)));
-
-        btnNavTasks.setOnClickListener(v ->
-                startActivity(new Intent(this, TaskActivity.class)));
-
-        btnNavProfile.setOnClickListener(v ->
-                startActivity(new Intent(this, ProfileActivity.class)));
-    }
-
-    /* ------------------- SMOOTH ENTRANCE ANIMATION ------------------- */
 
     private void animateEntrance() {
-
         cardStudyRoom.setAlpha(0f);
         cardStudyRoom.setTranslationY(100f);
-
         cardStudyRoom.animate()
                 .alpha(1f)
                 .translationY(0f)

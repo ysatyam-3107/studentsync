@@ -4,16 +4,20 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CircleCrop;
+
 import java.util.List;
 
 public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.MemberViewHolder> {
 
-    private Context context;
+    private final Context context;
     private List<Member> membersList;
 
     public MembersAdapter(Context context, List<Member> membersList) {
@@ -21,10 +25,16 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.MemberVi
         this.membersList = membersList;
     }
 
+    public void updateList(List<Member> newList) {
+        this.membersList = newList;
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public MemberViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_member, parent, false);
+        View view = LayoutInflater.from(context)
+                .inflate(R.layout.item_member, parent, false);
         return new MemberViewHolder(view);
     }
 
@@ -32,43 +42,39 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.MemberVi
     public void onBindViewHolder(@NonNull MemberViewHolder holder, int position) {
         Member member = membersList.get(position);
 
-        // Display name (not UID)
+        // Show only first name to keep it compact
         String displayName = member.getName();
-        if (displayName == null || displayName.isEmpty()) {
-            displayName = "User"; // Fallback
+        if (displayName != null && displayName.contains(" ")) {
+            displayName = displayName.substring(0, displayName.indexOf(" "));
         }
-        holder.tvMemberName.setText(displayName);
+        holder.tvName.setText(displayName);
 
-        // Display email
-        String email = member.getEmail();
-        if (email != null && !email.isEmpty()) {
-            holder.tvMemberEmail.setText(email);
-            holder.tvMemberEmail.setVisibility(View.VISIBLE);
+        // Load profile photo with circular crop
+        if (member.getPhotoUrl() != null && !member.getPhotoUrl().isEmpty()) {
+            Glide.with(context)
+                    .load(member.getPhotoUrl())
+                    .transform(new CircleCrop())
+                    .placeholder(R.drawable.ic_profile_circle)
+                    .error(R.drawable.ic_profile_circle)
+                    .into(holder.ivAvatar);
         } else {
-            holder.tvMemberEmail.setVisibility(View.GONE);
+            holder.ivAvatar.setImageResource(R.drawable.ic_profile_circle);
         }
     }
 
     @Override
     public int getItemCount() {
-        return membersList.size();
+        return membersList != null ? membersList.size() : 0;
     }
 
-    public void updateList(List<Member> newList) {
-        membersList.clear();
-        if (newList != null) {
-            membersList.addAll(newList);
-        }
-        notifyDataSetChanged();
-    }
+    static class MemberViewHolder extends RecyclerView.ViewHolder {
+        ImageView ivAvatar;
+        TextView tvName;
 
-    public static class MemberViewHolder extends RecyclerView.ViewHolder {
-        TextView tvMemberName, tvMemberEmail;
-
-        public MemberViewHolder(@NonNull View itemView) {
+        MemberViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvMemberName = itemView.findViewById(R.id.tvMemberName);
-            tvMemberEmail = itemView.findViewById(R.id.tvMemberEmail);
+            ivAvatar = itemView.findViewById(R.id.ivMemberAvatar);
+            tvName = itemView.findViewById(R.id.tvMemberName);
         }
     }
 }

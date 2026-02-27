@@ -13,8 +13,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -32,9 +30,8 @@ public class StudyRoomActivity extends AppCompatActivity {
     private static final String TAG = "StudyRoomActivity";
 
     private TextInputEditText etRoomCode;
-    private Button btnJoinRoom, btnCreateRoom;
+    private Button btnJoinRoom;
     private CardView cardCreateRoom;
-    private ImageButton btnBack;
     private ProgressBar progressBar;
 
     private FirebaseAuth auth;
@@ -47,9 +44,7 @@ public class StudyRoomActivity extends AppCompatActivity {
         // Initialize views
         etRoomCode = findViewById(R.id.etRoomCode);
         btnJoinRoom = findViewById(R.id.btnJoinRoom);
-       // btnCreateRoom = findViewById(R.id.btnCreateRoom);
         cardCreateRoom = findViewById(R.id.cardCreateRoom);
-        btnBack = findViewById(R.id.btnBack);
         progressBar = findViewById(R.id.progressBar);
 
         auth = FirebaseAuth.getInstance();
@@ -67,13 +62,6 @@ public class StudyRoomActivity extends AppCompatActivity {
             animateButton(cardCreateRoom);
             cardCreateRoom.postDelayed(this::createRoom, 200);
         });
-
-        if (btnBack != null) {
-            btnBack.setOnClickListener(v -> {
-                animateButton(btnBack);
-                btnBack.postDelayed(this::finish, 150);
-            });
-        }
     }
 
     private void animateEntrance() {
@@ -124,12 +112,10 @@ public class StudyRoomActivity extends AppCompatActivity {
             DataSnapshot snap = task.getResult();
             if (snap != null && snap.exists()) {
                 Log.d(TAG, "Room code collision, generating new code");
-                // Collision - retry with new code
                 setInProgress(false);
                 createRoom(); // Recursive call
             } else {
                 Log.d(TAG, "Room code available, creating room");
-                // Create the room
                 createRoomInDatabase(roomCode, currentUser.getUid());
             }
         });
@@ -205,7 +191,6 @@ public class StudyRoomActivity extends AppCompatActivity {
             DataSnapshot snap = task.getResult();
             if (snap != null && snap.exists()) {
                 Log.d(TAG, "✅ Room exists, joining: " + roomCode);
-                // Room exists - add user as member
                 roomRef.child("members").child(currentUser.getUid()).setValue(true)
                         .addOnSuccessListener(aVoid -> {
                             Log.d(TAG, "✅ Successfully joined room");
@@ -261,9 +246,6 @@ public class StudyRoomActivity extends AppCompatActivity {
             progressBar.setVisibility(inProgress ? View.VISIBLE : View.GONE);
         }
         btnJoinRoom.setEnabled(!inProgress);
-        if (btnCreateRoom != null) {
-            btnCreateRoom.setEnabled(!inProgress);
-        }
         if (cardCreateRoom != null) {
             cardCreateRoom.setEnabled(!inProgress);
         }

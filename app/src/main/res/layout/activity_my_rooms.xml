@@ -33,12 +33,13 @@
 
     </LinearLayout>
 
-    <!-- ROOMS CONTAINER -->
+    <!-- ROOMS CONTAINER — sits between header and nav -->
     <androidx.cardview.widget.CardView
         android:id="@+id/cardContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/headerLayout"
+        android:layout_above="@+id/bottomNavCard"
         android:layout_marginTop="-30dp"
         app:cardCornerRadius="28dp"
         app:cardElevation="10dp"
@@ -54,12 +55,13 @@
 
     </androidx.cardview.widget.CardView>
 
-    <!-- PREMIUM EMPTY STATE -->
+    <!-- EMPTY STATE — same constraint as card -->
     <LinearLayout
         android:id="@+id/emptyLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/headerLayout"
+        android:layout_above="@id/bottomNavCard"
         android:orientation="vertical"
         android:gravity="center"
         android:visibility="gone">
@@ -89,17 +91,26 @@
 
     </LinearLayout>
 
-    <!-- FLOATING ACTION BUTTON -->
+    <!-- FAB — sits above nav bar -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabCreateRoom"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        android:layout_above="@+id/bottomNavCard"
         android:layout_alignParentEnd="true"
-        android:layout_margin="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="16dp"
         android:src="@drawable/ic_add"
         app:backgroundTint="#4CAF50"
         app:tint="#FFFFFF"
         app:elevation="12dp"/>
+
+    <!-- BOTTOM NAV (persistent) -->
+    <include
+        layout="@layout/layout_bottom_nav"
+        android:id="@+id/bottomNavCard"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:layout_alignParentBottom="true"/>
 
 </RelativeLayout>

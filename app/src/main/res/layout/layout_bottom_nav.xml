@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/bottomNavCard"
+    android:layout_width="match_parent"
+    android:layout_height="70dp"
+    app:cardBackgroundColor="#0E1620"
+    app:cardCornerRadius="0dp"
+    app:cardElevation="16dp">
+
+    <!-- Thin top divider line -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1A2A3A"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- HOME -->
+        <LinearLayout
+            android:id="@+id/navHome"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless"
+            android:paddingTop="8dp"
+            android:paddingBottom="6dp">
+
+            <ImageView
+                android:id="@+id/navHomeIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_home"
+                app:tint="#4CAF50"/>
+
+            <TextView
+                android:id="@+id/navHomeLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Home"
+                android:textSize="10sp"
+                android:textColor="#4CAF50"
+                android:textStyle="bold"
+                android:layout_marginTop="3dp"/>
+
+            <!-- Active dot indicator -->
+            <View
+                android:id="@+id/navHomeDot"
+                android:layout_width="4dp"
+                android:layout_height="4dp"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/nav_active_dot"
+                android:visibility="visible"/>
+
+        </LinearLayout>
+
+        <!-- MY ROOMS -->
+        <LinearLayout
+            android:id="@+id/navRooms"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless"
+            android:paddingTop="8dp"
+            android:paddingBottom="6dp">
+
+            <ImageView
+                android:id="@+id/navRoomsIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_rooms"
+                app:tint="#546E7A"/>
+
+            <TextView
+                android:id="@+id/navRoomsLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="My Rooms"
+                android:textSize="10sp"
+                android:textColor="#546E7A"
+                android:layout_marginTop="3dp"/>
+
+            <View
+                android:id="@+id/navRoomsDot"
+                android:layout_width="4dp"
+                android:layout_height="4dp"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/nav_active_dot"
+                android:visibility="invisible"/>
+
+        </LinearLayout>
+
+        <!-- TASKS -->
+        <LinearLayout
+            android:id="@+id/navTasks"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless"
+            android:paddingTop="8dp"
+            android:paddingBottom="6dp">
+
+            <ImageView
+                android:id="@+id/navTasksIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_tasks"
+                app:tint="#546E7A"/>
+
+            <TextView
+                android:id="@+id/navTasksLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tasks"
+                android:textSize="10sp"
+                android:textColor="#546E7A"
+                android:layout_marginTop="3dp"/>
+
+            <View
+                android:id="@+id/navTasksDot"
+                android:layout_width="4dp"
+                android:layout_height="4dp"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/nav_active_dot"
+                android:visibility="invisible"/>
+
+        </LinearLayout>
+
+        <!-- PROFILE -->
+        <LinearLayout
+            android:id="@+id/navProfile"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless"
+            android:paddingTop="8dp"
+            android:paddingBottom="6dp">
+
+            <ImageView
+                android:id="@+id/navProfileIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_profile_circle"
+                app:tint="#546E7A"/>
+
+            <TextView
+                android:id="@+id/navProfileLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Profile"
+                android:textSize="10sp"
+                android:textColor="#546E7A"
+                android:layout_marginTop="3dp"/>
+
+            <View
+                android:id="@+id/navProfileDot"
+                android:layout_width="4dp"
+                android:layout_height="4dp"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/nav_active_dot"
+                android:visibility="invisible"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

@@ -1,9 +1,14 @@
 package com.example.studysync;
 
+import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.View;
@@ -52,17 +57,21 @@ public class NotesActivity extends AppCompatActivity {
 
     private ActivityResultLauncher<Intent> filePickerLauncher;
 
+    // Track download IDs so we can open the file when download completes
+    private final Map<Long, Note> downloadMap = new HashMap<>();
+    private BroadcastReceiver downloadReceiver;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notes);
 
-        rvNotes = findViewById(R.id.rvNotes);
+        rvNotes       = findViewById(R.id.rvNotes);
         btnUploadNote = findViewById(R.id.btnUploadNote);
-        progressBar = findViewById(R.id.progressBarNotes);
+        progressBar   = findViewById(R.id.progressBarNotes);
 
         roomCode = getIntent().getStringExtra("roomCode");
-        auth = FirebaseAuth.getInstance();
+        auth     = FirebaseAuth.getInstance();
 
         if (roomCode == null || auth.getCurrentUser() == null) {
             Toast.makeText(this, "Invalid session", Toast.LENGTH_SHORT).show();
@@ -73,7 +82,7 @@ public class NotesActivity extends AppCompatActivity {
         notesRef = FirebaseDatabase.getInstance()
                 .getReference("Notes").child(roomCode);
 
-        notesList = new ArrayList<>();
+        notesList    = new ArrayList<>();
         notesAdapter = new NotesAdapter(this, notesList,
                 new NotesAdapter.OnNoteClickListener() {
                     @Override
@@ -90,6 +99,27 @@ public class NotesActivity extends AppCompatActivity {
         rvNotes.setLayoutManager(new LinearLayoutManager(this));
         rvNotes.setAdapter(notesAdapter);
 
+        // Opens file automatically when download completes
+        downloadReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                long downloadId = intent.getLongExtra(
+                        DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+                if (downloadMap.containsKey(downloadId)) {
+                    Note note = downloadMap.get(downloadId);
+                    downloadMap.remove(downloadId);
+                    openDownloadedFile(downloadId, note);
+                }
+            }
+        };
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(downloadReceiver,
+                    new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+                    RECEIVER_EXPORTED);  // ← EXPORTED not NOT_EXPORTED for system broadcasts
+        } else {
+            registerReceiver(downloadReceiver,
+                    new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        }
         filePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -98,20 +128,15 @@ public class NotesActivity extends AppCompatActivity {
                             result.getData().getData() != null) {
 
                         Uri uri = result.getData().getData();
-
                         try {
                             getContentResolver().takePersistableUriPermission(
-                                    uri,
-                                    Intent.FLAG_GRANT_READ_URI_PERMISSION
-                            );
+                                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         } catch (SecurityException e) {
                             Log.w(TAG, "Could not persist URI permission", e);
                         }
-
                         uploadFile(uri);
                     }
-                }
-        );
+                });
 
         loadNotes();
 
@@ -131,6 +156,13 @@ public class NotesActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (downloadReceiver != null) {
+            unregisterReceiver(downloadReceiver);
+        }
+    }
 
     private void loadNotes() {
         notesRef.addValueEventListener(new ValueEventListener() {
@@ -161,18 +193,15 @@ public class NotesActivity extends AppCompatActivity {
         Log.d(TAG, "=== STARTING CLOUDINARY UPLOAD ===");
 
         long fileSize = getFileSize(fileUri);
-        Log.d(TAG, "File size: " + fileSize + " bytes");
 
         if (fileSize > MAX_FILE_SIZE) {
-            Toast.makeText(this,
-                    "File too large. Maximum size is 10MB",
+            Toast.makeText(this, "File too large. Maximum size is 10MB",
                     Toast.LENGTH_LONG).show();
             return;
         }
 
         if (fileSize == -1) {
-            Toast.makeText(this,
-                    "Could not read file. Please try again",
+            Toast.makeText(this, "Could not read file. Please try again",
                     Toast.LENGTH_SHORT).show();
             return;
         }
@@ -180,13 +209,10 @@ public class NotesActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         btnUploadNote.setEnabled(false);
 
-        // FIX: Trim filename to prevent whitespace issues
         String tempFileName = getFileName(fileUri);
         final String fileName = (tempFileName != null)
                 ? tempFileName.trim()
                 : "file_" + System.currentTimeMillis();
-
-        Log.d(TAG, "File name: " + fileName);
 
         String noteId = notesRef.push().getKey();
         if (noteId == null) {
@@ -196,18 +222,14 @@ public class NotesActivity extends AppCompatActivity {
             return;
         }
 
-        String fileType = detectFileType(fileUri, fileName);
-        Log.d(TAG, "File type: " + fileType);
-
+        String fileType   = detectFileType(fileUri, fileName);
         String folderPath = "studysync/" + roomCode;
 
-        // FIX: Sanitize public_id — strip spaces and special chars, replace with underscores
         String sanitizedName = getFileNameWithoutExtension(fileName)
                 .replaceAll("\\s+", "_")
                 .replaceAll("[^a-zA-Z0-9_\\-]", "");
 
         String publicId = noteId + "_" + sanitizedName;
-        Log.d(TAG, "Public ID: " + publicId);
 
         MediaManager.get().upload(fileUri)
                 .option("resource_type", "auto")
@@ -216,11 +238,8 @@ public class NotesActivity extends AppCompatActivity {
                 .callback(new UploadCallback() {
                     @Override
                     public void onStart(String requestId) {
-                        Log.d(TAG, "Upload started - Request ID: " + requestId);
-                        runOnUiThread(() ->
-                                Toast.makeText(NotesActivity.this,
-                                        "Uploading...", Toast.LENGTH_SHORT).show()
-                        );
+                        runOnUiThread(() -> Toast.makeText(NotesActivity.this,
+                                "Uploading...", Toast.LENGTH_SHORT).show());
                     }
 
                     @Override
@@ -233,16 +252,13 @@ public class NotesActivity extends AppCompatActivity {
                     public void onSuccess(String requestId, Map resultData) {
                         String fileUrl = (String) resultData.get("secure_url");
                         Log.d(TAG, "✅ Upload successful! URL: " + fileUrl);
-
                         runOnUiThread(() ->
-                                saveNoteToDatabase(noteId, fileName, fileUrl, fileType)
-                        );
+                                saveNoteToDatabase(noteId, fileName, fileUrl, fileType));
                     }
 
                     @Override
                     public void onError(String requestId, ErrorInfo error) {
                         Log.e(TAG, "❌ Upload error: " + error.getDescription());
-
                         runOnUiThread(() -> {
                             progressBar.setVisibility(View.GONE);
                             btnUploadNote.setEnabled(true);
@@ -262,8 +278,6 @@ public class NotesActivity extends AppCompatActivity {
 
     private void saveNoteToDatabase(String noteId, String fileName,
                                     String fileUrl, String fileType) {
-        Log.d(TAG, "=== SAVING TO DATABASE ===");
-
         String uploaderId = auth.getCurrentUser().getUid();
         DatabaseReference userRef = FirebaseDatabase.getInstance()
                 .getReference("Users").child(uploaderId);
@@ -284,15 +298,12 @@ public class NotesActivity extends AppCompatActivity {
 
                 notesRef.child(noteId).setValue(data)
                         .addOnSuccessListener(aVoid -> {
-                            Log.d(TAG, "✅ Note saved to database");
                             progressBar.setVisibility(View.GONE);
                             btnUploadNote.setEnabled(true);
                             Toast.makeText(NotesActivity.this,
-                                    "Note uploaded successfully!",
-                                    Toast.LENGTH_SHORT).show();
+                                    "Note uploaded successfully!", Toast.LENGTH_SHORT).show();
                         })
                         .addOnFailureListener(e -> {
-                            Log.e(TAG, "❌ Database save failed", e);
                             progressBar.setVisibility(View.GONE);
                             btnUploadNote.setEnabled(true);
                             Toast.makeText(NotesActivity.this,
@@ -303,46 +314,113 @@ public class NotesActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e(TAG, "❌ Failed to get user info", error.toException());
                 progressBar.setVisibility(View.GONE);
                 btnUploadNote.setEnabled(true);
             }
         });
     }
 
+    /**
+     * Uses Android DownloadManager to download file to Downloads/StudySync folder.
+     * File opens automatically when download completes via BroadcastReceiver.
+     */
     private void downloadNote(Note note) {
         try {
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setData(Uri.parse(note.getFileUrl()));
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(intent);
+            String fileUrl  = note.getFileUrl();
+            String fileName = note.getFileName();
+
+            if (fileName == null || fileName.isEmpty()) {
+                fileName = "studysync_file_" + System.currentTimeMillis();
+            }
+
+            Toast.makeText(this, "Downloading: " + fileName,
+                    Toast.LENGTH_SHORT).show();
+
+            DownloadManager.Request request =
+                    new DownloadManager.Request(Uri.parse(fileUrl));
+            request.setTitle(fileName);
+            request.setDescription("Downloading from StudySync...");
+            request.setNotificationVisibility(
+                    DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            request.setDestinationInExternalPublicDir(
+                    Environment.DIRECTORY_DOWNLOADS, "StudySync/" + fileName);
+            request.allowScanningByMediaScanner();
+
+            DownloadManager dm =
+                    (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+            long downloadId = dm.enqueue(request);
+
+            // Store to open when download finishes
+            downloadMap.put(downloadId, note);
+
         } catch (Exception e) {
             Log.e(TAG, "Download error", e);
-            Toast.makeText(this,
-                    "Cannot open file: " + e.getMessage(),
+            Toast.makeText(this, "Download failed: " + e.getMessage(),
                     Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Called by BroadcastReceiver when download completes — opens file with correct app.
+     */
+    private void openDownloadedFile(long downloadId, Note note) {
+        try {
+            DownloadManager dm =
+                    (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+
+            DownloadManager.Query query = new DownloadManager.Query();
+            query.setFilterById(downloadId);
+
+            Cursor cursor = dm.query(query);
+            if (cursor != null && cursor.moveToFirst()) {
+                int statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
+                int status = cursor.getInt(statusIndex);
+
+                if (status == DownloadManager.STATUS_SUCCESSFUL) {
+
+                    // ✅ Use DownloadManager's own intent to open — most reliable approach
+                    Intent openIntent = new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS);
+                    openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(openIntent);
+
+                } else {
+                    Toast.makeText(this, "Download failed", Toast.LENGTH_SHORT).show();
+                }
+                cursor.close();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Open file error", e);
+            // Fallback — open Downloads folder
+            Intent intent = new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
+    }
+    private String getMimeType(String fileType) {
+        if (fileType == null) return "*/*";
+        switch (fileType) {
+            case "pdf":      return "application/pdf";
+            case "image":    return "image/*";
+            case "document": return "application/msword";
+            case "text":     return "text/plain";
+            default:         return "*/*";
         }
     }
 
     private void deleteNote(Note note) {
         if (!note.getUploaderId().equals(auth.getCurrentUser().getUid())) {
-            Toast.makeText(this,
-                    "Only uploader can delete",
+            Toast.makeText(this, "Only uploader can delete",
                     Toast.LENGTH_SHORT).show();
             return;
         }
 
         notesRef.child(note.getId()).removeValue()
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this,
-                            "Note deleted successfully",
-                            Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this,
-                            "Failed to delete: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
+                .addOnSuccessListener(aVoid ->
+                        Toast.makeText(this, "Note deleted successfully",
+                                Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to delete: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show());
     }
 
     private String getFileName(Uri uri) {
@@ -350,9 +428,7 @@ public class NotesActivity extends AppCompatActivity {
                 uri, null, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
                 int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                if (nameIndex != -1) {
-                    return cursor.getString(nameIndex);
-                }
+                if (nameIndex != -1) return cursor.getString(nameIndex);
             }
         } catch (Exception e) {
             Log.e(TAG, "File name error", e);
@@ -360,7 +436,6 @@ public class NotesActivity extends AppCompatActivity {
         return null;
     }
 
-    // FIX: Trim to prevent trailing whitespace in public_id
     private String getFileNameWithoutExtension(String fileName) {
         if (fileName == null) return "file";
         fileName = fileName.trim();
@@ -373,9 +448,7 @@ public class NotesActivity extends AppCompatActivity {
                 uri, null, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
                 int sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
-                if (sizeIndex != -1) {
-                    return cursor.getLong(sizeIndex);
-                }
+                if (sizeIndex != -1) return cursor.getLong(sizeIndex);
             }
         } catch (Exception e) {
             Log.e(TAG, "File size error", e);
@@ -387,33 +460,25 @@ public class NotesActivity extends AppCompatActivity {
         String mimeType = getContentResolver().getType(uri);
 
         if (mimeType != null) {
-            if (mimeType.contains("pdf")) return "pdf";
-            else if (mimeType.contains("text")) return "text";
+            if (mimeType.contains("pdf"))                                         return "pdf";
+            else if (mimeType.contains("text"))                                   return "text";
             else if (mimeType.contains("word") || mimeType.contains("document")) return "document";
-            else if (mimeType.contains("image")) return "image";
+            else if (mimeType.contains("image"))                                  return "image";
         }
 
         if (fileName != null) {
-            String extension = "";
             int lastDot = fileName.lastIndexOf('.');
             if (lastDot > 0) {
-                extension = fileName.substring(lastDot + 1).toLowerCase();
-            }
-
-            switch (extension) {
-                case "pdf": return "pdf";
-                case "txt":
-                case "text": return "text";
-                case "doc":
-                case "docx": return "document";
-                case "jpg":
-                case "jpeg":
-                case "png":
-                case "gif": return "image";
-                default: return "other";
+                String ext = fileName.substring(lastDot + 1).toLowerCase();
+                switch (ext) {
+                    case "pdf":              return "pdf";
+                    case "txt": case "text": return "text";
+                    case "doc": case "docx": return "document";
+                    case "jpg": case "jpeg":
+                    case "png": case "gif":  return "image";
+                }
             }
         }
-
         return "other";
     }
 }
