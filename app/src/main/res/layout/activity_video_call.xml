@@ -5,37 +5,59 @@
     android:layout_height="match_parent"
     android:background="#0A0F1E">
 
-    <!-- ── Remote Video Grid (full screen) ── -->
-    <GridLayout
-        android:id="@+id/remoteVideoContainer"
+    <!--
+        ✅ FLEXIBLE MULTI-USER LAYOUT
+        ─────────────────────────────
+        1-4  users : grid fills screen nicely
+        5-9  users : grid tiles shrink, still visible
+        10+  users : ScrollView activates so you can scroll to see everyone
+        Control panel is always pinned at bottom, grid scrolls above it
+    -->
+
+    <!-- ── SCROLLABLE video grid (sits above control panel) ── -->
+    <ScrollView
+        android:id="@+id/videoScrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:columnCount="2"
-        android:rowCount="2" />
+        android:layout_above="@+id/controlPanel"
+        android:scrollbars="none"
+        android:overScrollMode="never"
+        android:fillViewport="true">
+
+        <!-- GridLayout is populated dynamically in VideoCallActivity.java -->
+        <GridLayout
+            android:id="@+id/remoteVideoContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnCount="2"
+            android:rowCount="1"/>
+
+    </ScrollView>
 
     <!-- ── Top scrim ── -->
     <View
         android:layout_width="match_parent"
-        android:layout_height="180dp"
+        android:layout_height="120dp"
         android:layout_alignParentTop="true"
-        android:background="@drawable/top_scrim_gradient"/>
+        android:background="@drawable/top_scrim_gradient"
+        android:pointerIcon="none"/>
 
-    <!-- ── Bottom scrim ── -->
+    <!-- ── Bottom scrim (behind control panel for visual depth) ── -->
     <View
         android:layout_width="match_parent"
-        android:layout_height="220dp"
+        android:layout_height="160dp"
         android:layout_alignParentBottom="true"
         android:background="@drawable/bottom_scrim_gradient"/>
 
-    <!-- ── Local Preview pip (top-right) ── -->
+    <!-- ── Local Preview pip (top-right, always on top) ── -->
     <androidx.cardview.widget.CardView
         android:id="@+id/localVideoContainer"
-        android:layout_width="100dp"
-        android:layout_height="140dp"
+        android:layout_width="95dp"
+        android:layout_height="130dp"
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true"
         android:layout_margin="16dp"
-        app:cardCornerRadius="16dp"
+        app:cardCornerRadius="14dp"
         app:cardElevation="16dp"
         app:cardBackgroundColor="#1A2238">
         <FrameLayout
@@ -43,7 +65,7 @@
             android:layout_height="match_parent"/>
     </androidx.cardview.widget.CardView>
 
-    <!-- ── Top info (count + timer) ── -->
+    <!-- ── Top info bar (count + timer) ── -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -76,7 +98,7 @@
 
     </LinearLayout>
 
-    <!-- ── Control Panel ── -->
+    <!-- ── Control Panel (pinned at bottom, never scrolls away) ── -->
     <LinearLayout
         android:id="@+id/controlPanel"
         android:layout_width="match_parent"
@@ -107,66 +129,51 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <!-- Mute mic -->
             <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center">
-                <ImageButton
-                    android:id="@+id/btnMute"
+                <ImageButton android:id="@+id/btnMute"
                     android:layout_width="58dp" android:layout_height="58dp"
                     android:layout_gravity="center"
                     android:background="@drawable/btn_control_normal"
                     android:src="@drawable/ic_mic"
-                    android:contentDescription="Mute"
-                    android:elevation="4dp"/>
+                    android:contentDescription="Mute" android:elevation="4dp"/>
             </FrameLayout>
 
-            <!-- Toggle camera -->
             <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center">
-                <ImageButton
-                    android:id="@+id/btnVideo"
+                <ImageButton android:id="@+id/btnVideo"
                     android:layout_width="58dp" android:layout_height="58dp"
                     android:layout_gravity="center"
                     android:background="@drawable/btn_control_normal"
                     android:src="@drawable/ic_video"
-                    android:contentDescription="Camera"
-                    android:elevation="4dp"/>
+                    android:contentDescription="Camera" android:elevation="4dp"/>
             </FrameLayout>
 
-            <!-- Flip camera (uses Android system rotate icon) -->
             <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center">
-                <ImageButton
-                    android:id="@+id/btnSwitchCamera"
+                <ImageButton android:id="@+id/btnSwitchCamera"
                     android:layout_width="52dp" android:layout_height="52dp"
                     android:layout_gravity="center"
                     android:background="@drawable/btn_control_normal"
                     android:src="@android:drawable/ic_menu_rotate"
                     android:contentDescription="Flip Camera"
-                    app:tint="#90CAF9"
-                    android:elevation="4dp"/>
+                    app:tint="#90CAF9" android:elevation="4dp"/>
             </FrameLayout>
 
-            <!-- Mute all (uses Android system silent icon) -->
             <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center">
-                <ImageButton
-                    android:id="@+id/btnMuteAll"
+                <ImageButton android:id="@+id/btnMuteAll"
                     android:layout_width="52dp" android:layout_height="52dp"
                     android:layout_gravity="center"
                     android:background="@drawable/btn_control_normal"
                     android:src="@android:drawable/ic_lock_silent_mode"
                     android:contentDescription="Mute All"
-                    app:tint="#90CAF9"
-                    android:elevation="4dp"/>
+                    app:tint="#90CAF9" android:elevation="4dp"/>
             </FrameLayout>
 
-            <!-- End call -->
             <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center">
-                <ImageButton
-                    android:id="@+id/btnEndCall"
+                <ImageButton android:id="@+id/btnEndCall"
                     android:layout_width="62dp" android:layout_height="62dp"
                     android:layout_gravity="center"
                     android:background="@drawable/btn_end_call"
                     android:src="@drawable/ic_call_end"
-                    android:contentDescription="End Call"
-                    android:elevation="8dp"/>
+                    android:contentDescription="End Call" android:elevation="8dp"/>
             </FrameLayout>
 
         </LinearLayout>

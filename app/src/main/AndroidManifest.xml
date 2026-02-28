@@ -3,17 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.studysync">
 
-    <!-- ===================== -->
-    <!-- REQUIRED PERMISSIONS -->
-    <!-- ===================== -->
-
     <!-- Internet (Firebase + Agora) -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- Storage (ONLY what you need) -->
-    <!-- For file picker + Firebase upload -->
+
+    <!-- Storage -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32"/>
@@ -23,7 +18,7 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
 
-    <!-- Network state (Agora – optional but recommended) -->
+    <!-- Network state -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
 
@@ -35,14 +30,9 @@
     <!-- Phone state (Agora optional) -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
-    <!-- Camera feature (optional, not required) -->
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false"/>
-
-    <!-- ===================== -->
-    <!-- APPLICATION -->
-    <!-- ===================== -->
 
     <application
         android:allowBackup="true"
@@ -54,7 +44,7 @@
         android:name=".MyApp"
         tools:targetApi="31">
 
-        <!-- LAUNCHER -->
+        <!-- ── LAUNCHER ─────────────────────────────────────────── -->
         <activity
             android:name=".LoginActivity"
             android:exported="true">
@@ -64,11 +54,34 @@
             </intent-filter>
         </activity>
 
-        <!-- MAIN FLOW -->
+        <!-- ── BOTTOM NAV ACTIVITIES (singleTop = no stack buildup) ─ -->
+        <!--
+            IMPORTANT: These 4 activities use singleTop so that tapping
+            a nav tab never creates a duplicate instance.
+            parentActivityName is REMOVED — it adds a system back arrow
+            which conflicts with the custom navbar behaviour.
+        -->
         <activity
             android:name=".MainActivity"
-            android:exported="false"/>
+            android:exported="false"
+            android:launchMode="singleTop"/>
 
+        <activity
+            android:name=".MyRoomsActivity"
+            android:exported="false"
+            android:launchMode="singleTop"/>
+
+        <activity
+            android:name=".TaskActivity"
+            android:exported="false"
+            android:launchMode="singleTop"/>
+
+        <activity
+            android:name=".ProfileActivity"
+            android:exported="false"
+            android:launchMode="singleTop"/>
+
+        <!-- ── OTHER ACTIVITIES (normal launch, not nav tabs) ────── -->
         <activity
             android:name=".RegisterActivity"
             android:exported="false"/>
@@ -79,45 +92,25 @@
 
         <activity
             android:name=".StudyRoomInsideActivity"
-            android:exported="false"
-            android:parentActivityName=".StudyRoomActivity"/>
+            android:exported="false"/>
 
         <activity
             android:name=".PomodoroActivity"
-            android:exported="false"
-            android:parentActivityName=".StudyRoomInsideActivity"/>
+            android:exported="false"/>
 
         <activity
             android:name=".ChatActivity"
-            android:exported="false"
-            android:parentActivityName=".StudyRoomInsideActivity"/>
+            android:exported="false"/>
 
         <activity
             android:name=".NotesActivity"
-            android:exported="false"
-            android:parentActivityName=".StudyRoomInsideActivity"/>
-
-        <activity
-            android:name=".TaskActivity"
-            android:exported="false"
-            android:parentActivityName=".MainActivity"/>
-
-        <activity
-            android:name=".MyRoomsActivity"
-            android:exported="false"
-            android:parentActivityName=".MainActivity"/>
-
-        <activity
-            android:name=".ProfileActivity"
-            android:exported="false"
-            android:parentActivityName=".MainActivity"/>
+            android:exported="false"/>
 
         <!-- VIDEO CALL -->
         <activity
             android:name=".VideoCallActivity"
             android:exported="false"
-            android:screenOrientation="portrait"
-            android:parentActivityName=".StudyRoomInsideActivity"/>
+            android:screenOrientation="portrait"/>
 
     </application>
 

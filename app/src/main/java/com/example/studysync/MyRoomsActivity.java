@@ -54,7 +54,7 @@ public class MyRoomsActivity extends AppCompatActivity {
         animateHeader();
 
         // ✅ Persistent navbar — marks "Rooms" tab as active
-        Bottomnavhelper.setup(this, Bottomnavhelper.Tab.ROOMS);
+        BottomNavHelper.setup(this, BottomNavHelper.Tab.ROOMS);
     }
 
     private void initViews() {

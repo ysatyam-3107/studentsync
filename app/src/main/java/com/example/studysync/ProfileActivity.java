@@ -54,7 +54,7 @@ public class ProfileActivity extends AppCompatActivity {
         setupClicks();
 
         // ✅ Persistent navbar — marks "Profile" tab as active
-        Bottomnavhelper.setup(this, Bottomnavhelper.Tab.PROFILE);
+        BottomNavHelper.setup(this, BottomNavHelper.Tab.PROFILE);
     }
 
     private void initViews() {

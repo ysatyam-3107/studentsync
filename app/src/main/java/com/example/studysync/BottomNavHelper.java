@@ -4,22 +4,23 @@ import android.content.Intent;
 import android.view.View;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 /**
  * BottomNavHelper
  *
- * Drop this one call into every Activity that shows the nav bar:
- *
+ * Add one line to every Activity that has the nav bar:
  *   BottomNavHelper.setup(this, BottomNavHelper.Tab.HOME);
  *
- * The layout_bottom_nav.xml must be <include>d in the activity's layout.
+ * Requires layout_bottom_nav.xml to be <include>d in the activity layout.
+ * Anim files slide_in_right.xml and slide_out_left.xml must be in res/anim/
+ *
+ * Also add to AndroidManifest.xml for each nav activity:
+ *   android:launchMode="singleTop"
  */
-public class Bottomnavhelper {
+public class BottomNavHelper {
 
     public enum Tab { HOME, ROOMS, TASKS, PROFILE }
 
@@ -33,15 +34,16 @@ public class Bottomnavhelper {
         View navTasks   = activity.findViewById(R.id.navTasks);
         View navProfile = activity.findViewById(R.id.navProfile);
 
-        if (navHome == null) return; // nav bar not in this layout
+        // Safety: if nav bar is not included in this layout, do nothing
+        if (navHome == null) return;
 
-        // Style each tab
-        styleTab(activity, navHome,    R.id.navHomeIcon,    R.id.navHomeLabel,    R.id.navHomeDot,    activeTab == Tab.HOME);
-        styleTab(activity, navRooms,   R.id.navRoomsIcon,   R.id.navRoomsLabel,   R.id.navRoomsDot,   activeTab == Tab.ROOMS);
-        styleTab(activity, navTasks,   R.id.navTasksIcon,   R.id.navTasksLabel,   R.id.navTasksDot,   activeTab == Tab.TASKS);
-        styleTab(activity, navProfile, R.id.navProfileIcon, R.id.navProfileLabel, R.id.navProfileDot, activeTab == Tab.PROFILE);
+        // Apply active/inactive styling to each tab
+        styleTab(navHome,    R.id.navHomeIcon,    R.id.navHomeLabel,    R.id.navHomeDot,    activeTab == Tab.HOME);
+        styleTab(navRooms,   R.id.navRoomsIcon,   R.id.navRoomsLabel,   R.id.navRoomsDot,   activeTab == Tab.ROOMS);
+        styleTab(navTasks,   R.id.navTasksIcon,   R.id.navTasksLabel,   R.id.navTasksDot,   activeTab == Tab.TASKS);
+        styleTab(navProfile, R.id.navProfileIcon, R.id.navProfileLabel, R.id.navProfileDot, activeTab == Tab.PROFILE);
 
-        // Animate navbar in from bottom
+        // Animate the whole navbar sliding up on enter
         View navCard = activity.findViewById(R.id.bottomNavCard);
         if (navCard != null) {
             navCard.setTranslationY(200f);
@@ -55,7 +57,7 @@ public class Bottomnavhelper {
                     .start();
         }
 
-        // Click listeners — navigate to the right activity
+        // ── Navigation click listeners ──────────────────────────────────
         navHome.setOnClickListener(v -> {
             if (activeTab != Tab.HOME) {
                 animateTabClick(navHome);
@@ -85,8 +87,7 @@ public class Bottomnavhelper {
         });
     }
 
-    private static void styleTab(AppCompatActivity activity,
-                                 View container,
+    private static void styleTab(View container,
                                  int iconId, int labelId, int dotId,
                                  boolean active) {
         ImageView icon  = container.findViewById(iconId);
@@ -94,22 +95,23 @@ public class Bottomnavhelper {
         View      dot   = container.findViewById(dotId);
 
         int color = active ? COLOR_ACTIVE : COLOR_INACTIVE;
-        if (icon  != null) icon.setColorFilter(color);
-        if (label != null) {
-            label.setTextColor(color);
-            label.setTextSize(active ? 10.5f : 10f);
-        }
-        if (dot != null) dot.setVisibility(active ? View.VISIBLE : View.INVISIBLE);
 
-        // Scale up the active icon slightly
         if (icon != null) {
+            icon.setColorFilter(color);
             float scale = active ? 1.15f : 1f;
             icon.setScaleX(scale);
             icon.setScaleY(scale);
         }
+        if (label != null) {
+            label.setTextColor(color);
+            label.setTextSize(active ? 10.5f : 10f);
+        }
+        if (dot != null) {
+            dot.setVisibility(active ? View.VISIBLE : View.INVISIBLE);
+        }
     }
 
-    /** Bounce animation when tab is tapped */
+    /** Bounce animation when a tab is tapped */
     private static void animateTabClick(View tab) {
         tab.animate()
                 .scaleX(0.88f).scaleY(0.88f)
@@ -123,10 +125,22 @@ public class Bottomnavhelper {
                 .start();
     }
 
+    /**
+     * Navigate to a tab activity.
+     *
+     * Uses FLAG_ACTIVITY_CLEAR_TOP | FLAG_ACTIVITY_SINGLE_TOP so that:
+     * - If the activity is already in the back stack it gets brought to front
+     *   WITHOUT creating a new instance (fixes the "stuck" bug)
+     * - The back stack doesn't keep growing with every nav tap
+     */
     private static void navigateTo(AppCompatActivity from, Class<?> to) {
+        // Don't navigate if we're already on this screen
+        if (from.getClass().equals(to)) return;
+
         Intent intent = new Intent(from, to);
-        // Smooth slide transition
-        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        // KEY FIX: CLEAR_TOP brings existing instance to front and clears above it.
+        // SINGLE_TOP prevents creating a duplicate if already on top.
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         from.startActivity(intent);
         from.overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
     }

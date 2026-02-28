@@ -24,9 +24,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvWelcome, tvRoomCount;
     private ImageView ivProfile;
     private CardView cardStudyRoom;
-
-    // ✅ NO btnNavHome/btnNavRooms/btnNavTasks/btnNavProfile fields
-    // — all nav is handled by BottomNavHelper using layout_bottom_nav.xml IDs
+    private CardView cardActiveRooms; // ✅ Added — was never declared
 
     private FirebaseAuth auth;
     private DatabaseReference roomsRef;
@@ -51,8 +49,7 @@ public class MainActivity extends AppCompatActivity {
         loadRoomCount(user.getUid());
         animateEntrance();
 
-        // ✅ Single line — persistent animated navbar, HOME tab highlighted
-        Bottomnavhelper.setup(this, Bottomnavhelper.Tab.HOME);
+        BottomNavHelper.setup(this, BottomNavHelper.Tab.HOME);
     }
 
     @Override
@@ -63,14 +60,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        tvWelcome     = findViewById(R.id.tvWelcome);
-        tvRoomCount   = findViewById(R.id.tvRoomCount);
-        ivProfile     = findViewById(R.id.ivProfile);
-        cardStudyRoom = findViewById(R.id.cardStudyRoom);
+        tvWelcome      = findViewById(R.id.tvWelcome);
+        tvRoomCount    = findViewById(R.id.tvRoomCount);
+        ivProfile      = findViewById(R.id.ivProfile);
+        cardStudyRoom  = findViewById(R.id.cardStudyRoom);
+        cardActiveRooms = findViewById(R.id.cardActiveRooms); // ✅ Added
 
-        // Profile photo tap → ProfileActivity
+        // Profile photo → ProfileActivity
         ivProfile.setOnClickListener(v ->
                 startActivity(new Intent(this, ProfileActivity.class)));
+
+        // ✅ Active Rooms card → MyRoomsActivity
+        //    This was the bug: the card was clickable in XML but had NO listener in Java
+        cardActiveRooms.setOnClickListener(v ->
+                startActivity(new Intent(this, MyRoomsActivity.class)));
+
+        // Quick Start card → StudyRoomActivity (create/join)
+        cardStudyRoom.setOnClickListener(v ->
+                startActivity(new Intent(this, StudyRoomActivity.class)));
     }
 
     private void loadUserPhoto(String uid) {
@@ -127,8 +134,9 @@ public class MainActivity extends AppCompatActivity {
                     if (room.child("members").hasChild(uid)) count++;
                 }
                 animateRoomCounter(count);
-                cardStudyRoom.setOnClickListener(v ->
-                        startActivity(new Intent(MainActivity.this, StudyRoomActivity.class)));
+
+                // ✅ cardStudyRoom click is set once here in initViews(),
+                //    not re-set on every Firebase update (cleaner)
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
