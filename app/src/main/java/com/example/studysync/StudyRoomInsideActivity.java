@@ -30,6 +30,9 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
     private List<Member> membersList;
 
     private String roomCode;
+    private String currentUserId;
+    private boolean isHost = false;
+
     private FirebaseAuth auth;
     private DatabaseReference roomRef;
 
@@ -38,7 +41,6 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_study_room_inside);
 
-        // Hide the default ActionBar back button (if ActionBar is shown)
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(false);
         }
@@ -56,6 +58,7 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
             return;
         }
 
+        currentUserId = auth.getCurrentUser().getUid();
         roomCode = getIntent().getStringExtra("roomCode");
         Log.d(TAG, "Room code received: " + roomCode);
 
@@ -66,20 +69,19 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
         }
 
         // Initialize UI
-        tvRoomCode    = findViewById(R.id.tvRoomCode);
-        btnVideoCall  = findViewById(R.id.btnVideoCall);
+        tvRoomCode      = findViewById(R.id.tvRoomCode);
+        btnVideoCall    = findViewById(R.id.btnVideoCall);
         btnPomodoroRoom = findViewById(R.id.btnPomodoroRoom);
-        btnChatRoom   = findViewById(R.id.btnChatRoom);
-        btnNotesRoom  = findViewById(R.id.btnNotesRoom);
-        btnTasksRoom  = findViewById(R.id.btnTasksRoom);
-        btnLeaveRoom  = findViewById(R.id.btnLeaveRoom);
-        rvMembers     = findViewById(R.id.rvMembers);
+        btnChatRoom     = findViewById(R.id.btnChatRoom);
+        btnNotesRoom    = findViewById(R.id.btnNotesRoom);
+        btnTasksRoom    = findViewById(R.id.btnTasksRoom);
+        btnLeaveRoom    = findViewById(R.id.btnLeaveRoom);
+        rvMembers       = findViewById(R.id.rvMembers);
 
-        // Horizontal layout for members (avatar + name)
         rvMembers.setLayoutManager(
                 new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-        membersList = new ArrayList<>();
-        membersAdapter = new MembersAdapter(this, membersList);
+        membersList    = new ArrayList<>();
+        membersAdapter = new MembersAdapter(this, membersList, false, this::removeMember);
         rvMembers.setAdapter(membersAdapter);
 
         tvRoomCode.setText("Room Code: " + roomCode);
@@ -87,7 +89,7 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
         roomRef = FirebaseDatabase.getInstance().getReference("Rooms").child(roomCode);
 
         verifyRoomExists();
-        loadMembers();
+        checkIfHost();   // ← determines isHost, then calls loadMembers()
 
         btnPomodoroRoom.setOnClickListener(v -> {
             Intent intent = new Intent(this, PomodoroActivity.class);
@@ -111,20 +113,59 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
                 startActivity(new Intent(this, TaskActivity.class)));
 
         btnVideoCall.setOnClickListener(v -> openVideoCall());
-
         btnLeaveRoom.setOnClickListener(v -> leaveRoom());
     }
 
+    // ─── Host detection ──────────────────────────────────────────────────────
+
+    /**
+     * Reads Rooms/{roomCode}/hostId from Firebase.
+     * If it matches the current user → isHost = true.
+     * Then loads members so the adapter already knows the host status.
+     */
+    private void checkIfHost() {
+        roomRef.child("hostId").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String hostId = snapshot.getValue(String.class);
+                isHost = currentUserId.equals(hostId);
+                Log.d(TAG, "isHost=" + isHost);
+                loadMembers();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "checkIfHost cancelled: " + error.getMessage());
+                loadMembers(); // load anyway, isHost stays false
+            }
+        });
+    }
+
+    // ─── Remove member (host only) ────────────────────────────────────────────
+
+    /**
+     * Called by MembersAdapter when the host confirms removal.
+     * Removes the member's UID from Rooms/{roomCode}/members.
+     */
+    private void removeMember(String uid) {
+        if (!isHost) return;
+        roomRef.child("members").child(uid).removeValue()
+                .addOnSuccessListener(aVoid ->
+                        Toast.makeText(this, "Member removed", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to remove member", Toast.LENGTH_SHORT).show());
+    }
+
+    // ─── Video call ───────────────────────────────────────────────────────────
+
     @Override
     public boolean onSupportNavigateUp() {
-        // Disable the back navigation from ActionBar
         return false;
     }
 
     private void openVideoCall() {
-        String userId = auth.getCurrentUser().getUid();
         DatabaseReference userRef = FirebaseDatabase.getInstance()
-                .getReference("Users").child(userId);
+                .getReference("Users").child(currentUserId);
 
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -148,6 +189,8 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
         });
     }
 
+    // ─── Room existence ───────────────────────────────────────────────────────
+
     private void verifyRoomExists() {
         roomRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -166,6 +209,8 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
         });
     }
 
+    // ─── Members loader ───────────────────────────────────────────────────────
+
     private void loadMembers() {
         roomRef.child("members").addValueEventListener(new ValueEventListener() {
             @Override
@@ -174,6 +219,11 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
                 long total = snapshot.getChildrenCount();
 
                 if (total == 0) {
+                    // Rebuild adapter with current isHost so long-press logic is correct
+                    membersAdapter = new MembersAdapter(
+                            StudyRoomInsideActivity.this, membersList, isHost,
+                            StudyRoomInsideActivity.this::removeMember);
+                    rvMembers.setAdapter(membersAdapter);
                     membersAdapter.updateList(membersList);
                     return;
                 }
@@ -199,7 +249,13 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
 
                                     processed[0]++;
                                     if (processed[0] == total) {
-                                        membersAdapter.updateList(new ArrayList<>(membersList));
+                                        // Rebuild adapter with correct isHost value
+                                        membersAdapter = new MembersAdapter(
+                                                StudyRoomInsideActivity.this,
+                                                new ArrayList<>(membersList),
+                                                isHost,
+                                                StudyRoomInsideActivity.this::removeMember);
+                                        rvMembers.setAdapter(membersAdapter);
                                     }
                                 }
 
@@ -207,7 +263,12 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
                                 public void onCancelled(@NonNull DatabaseError error) {
                                     processed[0]++;
                                     if (processed[0] == total) {
-                                        membersAdapter.updateList(new ArrayList<>(membersList));
+                                        membersAdapter = new MembersAdapter(
+                                                StudyRoomInsideActivity.this,
+                                                new ArrayList<>(membersList),
+                                                isHost,
+                                                StudyRoomInsideActivity.this::removeMember);
+                                        rvMembers.setAdapter(membersAdapter);
                                     }
                                 }
                             });
@@ -221,6 +282,8 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
             }
         });
     }
+
+    // ─── Leave room ───────────────────────────────────────────────────────────
 
     private void leaveRoom() {
         if (auth.getCurrentUser() == null) return;

@@ -5,15 +5,6 @@
     android:layout_height="match_parent"
     android:background="#0A0F1E">
 
-    <!--
-        ✅ FLEXIBLE MULTI-USER LAYOUT
-        ─────────────────────────────
-        1-4  users : grid fills screen nicely
-        5-9  users : grid tiles shrink, still visible
-        10+  users : ScrollView activates so you can scroll to see everyone
-        Control panel is always pinned at bottom, grid scrolls above it
-    -->
-
     <!-- ── SCROLLABLE video grid (sits above control panel) ── -->
     <ScrollView
         android:id="@+id/videoScrollView"

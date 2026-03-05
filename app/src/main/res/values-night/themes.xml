@@ -1,7 +1,22 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Base application theme (dark). -->
     <style name="Base.Theme.Studysync" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
     </style>
+
+    <!-- Dark dialog theme for AlertDialogs throughout the app -->
+    <style name="DarkDialogTheme" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="android:background">#1A1A1A</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="colorAccent">#4CAF50</item>
+        <item name="buttonBarPositiveButtonStyle">@style/DarkDialogButtonStyle</item>
+        <item name="buttonBarNegativeButtonStyle">@style/DarkDialogButtonStyle</item>
+    </style>
+
+    <style name="DarkDialogButtonStyle" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">#4CAF50</item>
+    </style>
+
 </resources>
