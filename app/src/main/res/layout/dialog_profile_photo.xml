@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    dialog_profile_photo.xml
-    Used by MembersAdapter to show a member's full profile photo.
-    Place in: res/layout/dialog_profile_photo.xml
+    res/layout/dialog_profile_photo.xml
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -10,18 +8,18 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="24dp"
-    android:background="#1A1A1A">
+    android:background="#1E1E1E">
 
     <!-- Large circular profile photo -->
     <ImageView
         android:id="@+id/ivFullProfilePhoto"
-        android:layout_width="180dp"
-        android:layout_height="180dp"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
         android:scaleType="centerCrop"
         android:src="@drawable/ic_profile_circle"
         android:layout_marginBottom="16dp" />
 
-    <!-- Member's display name -->
+    <!-- Member name -->
     <TextView
         android:id="@+id/tvFullProfileName"
         android:layout_width="wrap_content"
@@ -29,6 +27,18 @@
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="#FFFFFF"
-        android:gravity="center" />
+        android:gravity="center"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Remove button — shown only to host via MembersAdapter -->
+    <Button
+        android:id="@+id/btnRemoveMember"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🚫  Remove from Room"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#C62828"
+        android:visibility="gone"
+        android:layout_marginTop="4dp" />
 
 </LinearLayout>

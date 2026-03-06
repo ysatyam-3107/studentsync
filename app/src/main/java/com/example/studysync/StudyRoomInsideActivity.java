@@ -124,7 +124,7 @@ public class StudyRoomInsideActivity extends AppCompatActivity {
      * Then loads members so the adapter already knows the host status.
      */
     private void checkIfHost() {
-        roomRef.child("hostId").addListenerForSingleValueEvent(new ValueEventListener() {
+        roomRef.child("createdBy").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String hostId = snapshot.getValue(String.class);

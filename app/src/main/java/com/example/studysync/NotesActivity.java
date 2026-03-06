@@ -43,7 +43,7 @@ import java.util.Map;
 public class NotesActivity extends AppCompatActivity {
 
     private static final String TAG = "NotesActivity";
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    private static final long MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 
     private RecyclerView rvNotes;
     private Button btnUploadNote;
@@ -111,6 +111,7 @@ public class NotesActivity extends AppCompatActivity {
 
         // ACTION_DOWNLOAD_COMPLETE is sent by the system DownloadManager (outside our app),
         // so we MUST use RECEIVER_EXPORTED on Android 13+ — NOT_EXPORTED would block it.
+
         IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(downloadReceiver, filter, Context.RECEIVER_EXPORTED);
@@ -177,7 +178,7 @@ public class NotesActivity extends AppCompatActivity {
                     }
                 }
                 // FIX: Use notifyItemRangeChanged instead of notifyDataSetChanged
-                notesAdapter.notifyItemRangeChanged(0, notesList.size());
+                notesAdapter.notifyDataSetChanged();
             }
 
             @Override
@@ -235,35 +236,27 @@ public class NotesActivity extends AppCompatActivity {
                         String url = (String) resultData.get("secure_url");
                         Log.d(TAG, "Upload success: " + url);
 
-                        // FIX: null-safe UID access
                         String uid = (auth.getCurrentUser() != null)
                                 ? auth.getCurrentUser().getUid() : "unknown";
 
-                        Map<String, Object> noteData = new HashMap<>();
-                        noteData.put("fileName",   fileName);
-                        noteData.put("fileUrl",    url);
-                        noteData.put("fileType",   fileType);
-                        noteData.put("uploaderId", uid);
-                        noteData.put("timestamp",  ServerValue.TIMESTAMP);
-
-                        notesRef.push().setValue(noteData)
-                                .addOnSuccessListener(aVoid -> {
-                                    runOnUiThread(() -> {
-                                        progressBar.setVisibility(View.GONE);
-                                        btnUploadNote.setEnabled(true);
-                                        Toast.makeText(NotesActivity.this,
-                                                "Note uploaded successfully",
-                                                Toast.LENGTH_SHORT).show();
-                                    });
-                                })
-                                .addOnFailureListener(e -> {
-                                    runOnUiThread(() -> {
-                                        progressBar.setVisibility(View.GONE);
-                                        btnUploadNote.setEnabled(true);
-                                        Toast.makeText(NotesActivity.this,
-                                                "Failed to save note: " + e.getMessage(),
-                                                Toast.LENGTH_SHORT).show();
-                                    });
+                        // Fetch uploader name first so "Uploaded by" is never null
+                        FirebaseDatabase.getInstance().getReference("Users").child(uid)
+                                .addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot userSnap) {
+                                        String uploaderName = userSnap.child("name").getValue(String.class);
+                                        if (uploaderName == null || uploaderName.isEmpty()) {
+                                            uploaderName = (auth.getCurrentUser() != null
+                                                    && auth.getCurrentUser().getEmail() != null)
+                                                    ? auth.getCurrentUser().getEmail().split("@")[0]
+                                                    : "Unknown";
+                                        }
+                                        saveNoteToFirebase(uid, uploaderName, fileName, url, fileType);
+                                    }
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+                                        saveNoteToFirebase(uid, "Unknown", fileName, url, fileType);
+                                    }
                                 });
                     }
 
@@ -436,7 +429,6 @@ public class NotesActivity extends AppCompatActivity {
     // ─── Delete ───────────────────────────────────────────────────────────────
 
     private void deleteNote(Note note) {
-        // FIX: null-safe UID check
         if (auth.getCurrentUser() == null) return;
         String currentUid = auth.getCurrentUser().getUid();
 
@@ -445,13 +437,18 @@ public class NotesActivity extends AppCompatActivity {
             return;
         }
 
-        notesRef.child(note.getId()).removeValue()
-                .addOnSuccessListener(aVoid ->
-                        Toast.makeText(this, "Note deleted successfully",
-                                Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Failed to delete: " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show());
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Delete Note")
+                .setMessage("Delete \"" + note.getFileName() + "\"?")
+                .setPositiveButton("Delete", (dialog, which) ->
+                        notesRef.child(note.getId()).removeValue()
+                                .addOnSuccessListener(aVoid ->
+                                        Toast.makeText(this, "Note deleted", Toast.LENGTH_SHORT).show())
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(this, "Failed to delete: " + e.getMessage(),
+                                                Toast.LENGTH_SHORT).show()))
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -536,4 +533,31 @@ public class NotesActivity extends AppCompatActivity {
         }
         return "other";
     }
+    // ─── Save note to Firebase (called after fetching uploader name) ──────────
+
+    private void saveNoteToFirebase(String uid, String uploaderName,
+                                    String fileName, String url, String fileType) {
+        Map<String, Object> noteData = new HashMap<>();
+        noteData.put("fileName",     fileName);
+        noteData.put("fileUrl",      url);
+        noteData.put("fileType",     fileType);
+        noteData.put("uploaderId",   uid);
+        noteData.put("uploaderName", uploaderName);   // FIX: was missing → showed "null"
+        noteData.put("uploadedAt",   ServerValue.TIMESTAMP); // FIX: was "timestamp" → showed Jan 1970
+
+        notesRef.push().setValue(noteData)
+                .addOnSuccessListener(aVoid -> runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    btnUploadNote.setEnabled(true);
+                    Toast.makeText(this, "Note uploaded successfully", Toast.LENGTH_SHORT).show();
+                }))
+                .addOnFailureListener(e -> runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    btnUploadNote.setEnabled(true);
+                    Toast.makeText(this, "Failed to save note: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                }));
+    }
+
+
 }

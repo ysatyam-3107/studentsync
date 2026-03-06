@@ -20,9 +20,9 @@ import java.util.Locale;
 
 public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHolder> {
 
-    private Context context;
-    private List<Note> notesList;
-    private OnNoteClickListener listener;
+    private final Context context;
+    private final List<Note> notesList;
+    private final OnNoteClickListener listener;
 
     public interface OnNoteClickListener {
         void onDownloadClick(Note note);
@@ -30,9 +30,9 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
     }
 
     public NotesAdapter(Context context, List<Note> notesList, OnNoteClickListener listener) {
-        this.context = context;
+        this.context   = context;
         this.notesList = notesList;
-        this.listener = listener;
+        this.listener  = listener;
     }
 
     @NonNull
@@ -52,63 +52,62 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
         holder.tvDate.setText(sdf.format(new Date(note.getUploadedAt())));
 
-        // ✅ FIXED: Add null check for fileType
+        // File icon based on type
         String fileType = note.getFileType();
         if (fileType != null) {
-            // Set file icon based on type
-            if (fileType.equals("pdf")) {
-                holder.ivFileIcon.setImageResource(android.R.drawable.ic_menu_gallery);
-            } else if (fileType.equals("text")) {
-                holder.ivFileIcon.setImageResource(android.R.drawable.ic_menu_edit);
-            } else if (fileType.equals("document")) {
-                holder.ivFileIcon.setImageResource(android.R.drawable.ic_menu_edit);
-            } else {
-                holder.ivFileIcon.setImageResource(android.R.drawable.ic_menu_info_details);
+            switch (fileType.toLowerCase()) {
+                case "pdf":
+                    holder.ivFileIcon.setImageResource(android.R.drawable.ic_menu_gallery);
+                    break;
+                case "text":
+                case "document":
+                    holder.ivFileIcon.setImageResource(android.R.drawable.ic_menu_edit);
+                    break;
+                default:
+                    holder.ivFileIcon.setImageResource(android.R.drawable.ic_menu_info_details);
             }
         } else {
-            // Default icon if fileType is null
             holder.ivFileIcon.setImageResource(android.R.drawable.ic_menu_info_details);
         }
 
-        // Show delete button only for uploader
-        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        if (note.getUploaderId().equals(currentUserId)) {
-            holder.btnDelete.setVisibility(View.VISIBLE);
-        } else {
-            holder.btnDelete.setVisibility(View.GONE);
-        }
+        // Show delete button only for the uploader
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null
+                ? FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
+        boolean isOwner = note.getUploaderId() != null
+                && note.getUploaderId().equals(currentUserId);
+        holder.btnDelete.setVisibility(isOwner ? View.VISIBLE : View.GONE);
 
+        // Download — consume click so it doesn't bubble up
         holder.btnDownload.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onDownloadClick(note);
-            }
+            v.setPressed(true);
+            if (listener != null) listener.onDownloadClick(note);
         });
 
+        // Delete — consume click so it doesn't bubble up or trigger back gesture
         holder.btnDelete.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onDeleteClick(note);
-            }
+            v.setPressed(true);
+            if (listener != null) listener.onDeleteClick(note);
         });
     }
 
     @Override
     public int getItemCount() {
-        return notesList.size();
+        return notesList == null ? 0 : notesList.size();
     }
 
     public static class NoteViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivFileIcon;
-        TextView tvFileName, tvUploader, tvDate;
+        ImageView   ivFileIcon;
+        TextView    tvFileName, tvUploader, tvDate;
         ImageButton btnDownload, btnDelete;
 
         public NoteViewHolder(@NonNull View itemView) {
             super(itemView);
-            ivFileIcon = itemView.findViewById(R.id.ivFileIcon);
-            tvFileName = itemView.findViewById(R.id.tvFileName);
-            tvUploader = itemView.findViewById(R.id.tvUploader);
-            tvDate = itemView.findViewById(R.id.tvDate);
+            ivFileIcon  = itemView.findViewById(R.id.ivFileIcon);
+            tvFileName  = itemView.findViewById(R.id.tvFileName);
+            tvUploader  = itemView.findViewById(R.id.tvUploader);
+            tvDate      = itemView.findViewById(R.id.tvDate);
             btnDownload = itemView.findViewById(R.id.btnDownload);
-            btnDelete = itemView.findViewById(R.id.btnDeleteNote);
+            btnDelete   = itemView.findViewById(R.id.btnDeleteNote);
         }
     }
 }

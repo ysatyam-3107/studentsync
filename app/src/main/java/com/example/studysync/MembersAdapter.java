@@ -5,6 +5,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -38,7 +39,6 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.MemberVi
 
     public void updateList(List<Member> newList) {
         this.members = newList;
-        // FIX: more efficient than notifyDataSetChanged
         notifyItemRangeChanged(0, newList.size());
     }
 
@@ -66,17 +66,9 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.MemberVi
             holder.ivAvatar.setImageResource(R.drawable.ic_profile_circle);
         }
 
-        // Tap -> full profile photo dialog (all users)
-        holder.ivAvatar.setOnClickListener(v -> showProfilePhotoDialog(member));
-
-        // Long-press -> remove member (host only)
-        holder.itemView.setOnLongClickListener(v -> {
-            if (isHost) {
-                showRemoveMemberDialog(member);
-                return true;
-            }
-            return false;
-        });
+        // Tap anywhere on item → open profile dialog (shows Remove button if host)
+        holder.itemView.setOnClickListener(v -> showProfileDialog(member));
+        holder.ivAvatar.setOnClickListener(v -> showProfileDialog(member));
     }
 
     @Override
@@ -84,14 +76,17 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.MemberVi
         return members == null ? 0 : members.size();
     }
 
-    // ── Profile photo dialog ──────────────────────────────────────────────────
-
-    private void showProfilePhotoDialog(Member member) {
+    /**
+     * Shows member profile photo + name.
+     * If current user is host AND this member is not themselves → shows "Remove" button.
+     */
+    private void showProfileDialog(Member member) {
         View dialogView = LayoutInflater.from(context)
                 .inflate(R.layout.dialog_profile_photo, null);
 
-        ImageView ivFullPhoto = dialogView.findViewById(R.id.ivFullProfilePhoto);
-        TextView  tvFullName  = dialogView.findViewById(R.id.tvFullProfileName);
+        ImageView ivFullPhoto   = dialogView.findViewById(R.id.ivFullProfilePhoto);
+        TextView  tvFullName    = dialogView.findViewById(R.id.tvFullProfileName);
+        Button    btnRemove     = dialogView.findViewById(R.id.btnRemoveMember);
 
         tvFullName.setText(member.getName());
 
@@ -106,22 +101,37 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.MemberVi
             ivFullPhoto.setImageResource(R.drawable.ic_profile_circle);
         }
 
-        // FIX: DarkDialogTheme is now properly defined in themes.xml
-        new AlertDialog.Builder(context, R.style.DarkDialogTheme)
+        AlertDialog dialog = new AlertDialog.Builder(context, R.style.DarkDialogTheme)
                 .setView(dialogView)
                 .setPositiveButton("Close", null)
-                .show();
+                .create();
+
+        // Show Remove button only if viewer is host AND this is NOT their own profile
+        String currentUid = "";
+        if (com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() != null) {
+            currentUid = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid();
+        }
+        boolean isSelf = currentUid.equals(member.getUid());
+
+        if (isHost && !isSelf) {
+            btnRemove.setVisibility(View.VISIBLE);
+            btnRemove.setOnClickListener(v -> {
+                dialog.dismiss();
+                showRemoveConfirmDialog(member);
+            });
+        } else {
+            btnRemove.setVisibility(View.GONE);
+        }
+
+        dialog.show();
     }
 
-    // ── Remove member dialog (host only) ─────────────────────────────────────
-
-    private void showRemoveMemberDialog(Member member) {
-        // FIX: null-safe uid — fixes "getUid() may produce NullPointerException"
+    private void showRemoveConfirmDialog(Member member) {
         String uid = (member.getUid() != null) ? member.getUid() : "";
 
         new AlertDialog.Builder(context, R.style.DarkDialogTheme)
                 .setTitle("Remove Member")
-                .setMessage("Remove " + member.getName() + " from the room?")
+                .setMessage("Remove \"" + member.getName() + "\" from the room?")
                 .setPositiveButton("Remove", (dialog, which) -> {
                     if (removeListener != null && !uid.isEmpty()) {
                         removeListener.onRemove(uid);
@@ -130,8 +140,6 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.MemberVi
                 .setNegativeButton("Cancel", null)
                 .show();
     }
-
-    // ── ViewHolder ────────────────────────────────────────────────────────────
 
     static class MemberViewHolder extends RecyclerView.ViewHolder {
         ImageView ivAvatar;

@@ -30,19 +30,19 @@ public class ChatActivity extends AppCompatActivity {
     private String roomCode;
     private DatabaseReference messagesRef;
     private FirebaseAuth auth;
-    private String currentUserName = "User"; // Default
+    private String currentUserName = "User";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
-        rvChat = findViewById(R.id.rvChat);
+        rvChat    = findViewById(R.id.rvChat);
         etMessage = findViewById(R.id.etMessage);
-        btnSend = findViewById(R.id.btnSend);
+        btnSend   = findViewById(R.id.btnSend);
 
         roomCode = getIntent().getStringExtra("roomCode");
-        auth = FirebaseAuth.getInstance();
+        auth     = FirebaseAuth.getInstance();
 
         if (roomCode == null || auth.getCurrentUser() == null) {
             Toast.makeText(this, "Invalid session", Toast.LENGTH_SHORT).show();
@@ -54,52 +54,45 @@ public class ChatActivity extends AppCompatActivity {
                 .getReference("Messages").child(roomCode);
 
         messagesList = new ArrayList<>();
-        chatAdapter = new ChatAdapter(this, messagesList);
+
+        // Pass delete callback — removes message from Firebase for everyone
+        chatAdapter = new ChatAdapter(this, messagesList, this::deleteMessage);
 
         rvChat.setLayoutManager(new LinearLayoutManager(this));
         rvChat.setAdapter(chatAdapter);
 
-        // Load current user's name
         loadCurrentUserName();
-
-        // Load messages
         loadMessages();
 
         btnSend.setOnClickListener(v -> sendMessage());
     }
 
+    // ─── Load user name ───────────────────────────────────────────────────────
+
     private void loadCurrentUserName() {
         String uid = auth.getCurrentUser().getUid();
-        DatabaseReference userRef = FirebaseDatabase.getInstance()
-                .getReference("Users").child(uid);
-
-        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    String name = snapshot.child("name").getValue(String.class);
-                    if (name != null && !name.isEmpty()) {
-                        currentUserName = name;
-                    } else {
-                        // Fallback to email username
-                        String email = auth.getCurrentUser().getEmail();
-                        if (email != null) {
-                            currentUserName = email.split("@")[0];
+        FirebaseDatabase.getInstance().getReference("Users").child(uid)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String name = snapshot.child("name").getValue(String.class);
+                        if (name != null && !name.isEmpty()) {
+                            currentUserName = name;
+                        } else {
+                            String email = auth.getCurrentUser().getEmail();
+                            if (email != null) currentUserName = email.split("@")[0];
                         }
                     }
-                }
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                // Use email as fallback
-                String email = auth.getCurrentUser().getEmail();
-                if (email != null) {
-                    currentUserName = email.split("@")[0];
-                }
-            }
-        });
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        String email = auth.getCurrentUser().getEmail();
+                        if (email != null) currentUserName = email.split("@")[0];
+                    }
+                });
     }
+
+    // ─── Load messages ────────────────────────────────────────────────────────
 
     private void loadMessages() {
         messagesRef.addValueEventListener(new ValueEventListener() {
@@ -109,11 +102,12 @@ public class ChatActivity extends AppCompatActivity {
                 for (DataSnapshot msgSnap : snapshot.getChildren()) {
                     ChatMessage msg = msgSnap.getValue(ChatMessage.class);
                     if (msg != null) {
+                        msg.setMessageId(msgSnap.getKey()); // store Firebase key for deletion
                         messagesList.add(msg);
                     }
                 }
                 chatAdapter.notifyDataSetChanged();
-                if (messagesList.size() > 0) {
+                if (!messagesList.isEmpty()) {
                     rvChat.smoothScrollToPosition(messagesList.size() - 1);
                 }
             }
@@ -126,6 +120,8 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
+    // ─── Send message ─────────────────────────────────────────────────────────
+
     private void sendMessage() {
         String text = etMessage.getText().toString().trim();
         if (text.isEmpty()) return;
@@ -133,14 +129,28 @@ public class ChatActivity extends AppCompatActivity {
         String senderId = auth.getCurrentUser().getUid();
 
         Map<String, Object> message = new HashMap<>();
-        message.put("senderId", senderId);
-        message.put("senderName", currentUserName); // Use the loaded name
-        message.put("text", text);
-        message.put("timestamp", ServerValue.TIMESTAMP);
+        message.put("senderId",   senderId);
+        message.put("senderName", currentUserName);
+        message.put("text",       text);
+        message.put("timestamp",  ServerValue.TIMESTAMP);
 
         messagesRef.push().setValue(message)
                 .addOnSuccessListener(aVoid -> etMessage.setText(""))
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Failed to send", Toast.LENGTH_SHORT).show());
+    }
+
+    // ─── Delete message for everyone ──────────────────────────────────────────
+
+    private void deleteMessage(ChatMessage msg) {
+        if (msg.getMessageId() == null || msg.getMessageId().isEmpty()) {
+            Toast.makeText(this, "Cannot delete this message", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        messagesRef.child(msg.getMessageId()).removeValue()
+                .addOnSuccessListener(aVoid ->
+                        Toast.makeText(this, "Message deleted", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show());
     }
 }
