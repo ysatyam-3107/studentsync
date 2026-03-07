@@ -3,9 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0A0F1E">
+    android:background="#060912">
 
-    <!-- ── SCROLLABLE video grid (sits above control panel) ── -->
+    <!-- ── Scrollable remote video grid — gets ALL space above control panel ── -->
     <ScrollView
         android:id="@+id/videoScrollView"
         android:layout_width="match_parent"
@@ -15,7 +15,6 @@
         android:overScrollMode="never"
         android:fillViewport="true">
 
-        <!-- GridLayout is populated dynamically in VideoCallActivity.java -->
         <GridLayout
             android:id="@+id/remoteVideoContainer"
             android:layout_width="match_parent"
@@ -25,147 +24,220 @@
 
     </ScrollView>
 
-    <!-- ── Top scrim ── -->
+    <!-- ── Top gradient scrim ── -->
     <View
         android:layout_width="match_parent"
-        android:layout_height="120dp"
+        android:layout_height="110dp"
         android:layout_alignParentTop="true"
-        android:background="@drawable/top_scrim_gradient"
-        android:pointerIcon="none"/>
+        android:background="@drawable/top_scrim_gradient"/>
 
-    <!-- ── Bottom scrim (behind control panel for visual depth) ── -->
+    <!-- ── Bottom scrim behind control panel ── -->
     <View
         android:layout_width="match_parent"
-        android:layout_height="160dp"
+        android:layout_height="130dp"
         android:layout_alignParentBottom="true"
         android:background="@drawable/bottom_scrim_gradient"/>
 
-    <!-- ── Local Preview pip (top-right, always on top) ── -->
+    <!-- ── Local PiP — top-right ── -->
     <androidx.cardview.widget.CardView
         android:id="@+id/localVideoContainer"
-        android:layout_width="95dp"
-        android:layout_height="130dp"
+        android:layout_width="80dp"
+        android:layout_height="110dp"
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true"
-        android:layout_margin="16dp"
+        android:layout_margin="14dp"
         app:cardCornerRadius="14dp"
-        app:cardElevation="16dp"
+        app:cardElevation="20dp"
         app:cardBackgroundColor="#1A2238">
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
     </androidx.cardview.widget.CardView>
 
-    <!-- ── Top info bar (count + timer) ── -->
+    <!-- ── Top info: count + timer ── -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_margin="16dp"
-        android:orientation="vertical">
+        android:layout_margin="14dp"
+        android:orientation="vertical"
+        android:gravity="start">
 
-        <TextView
-            android:id="@+id/tvParticipantCount"
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="👥 1 in call"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:background="@drawable/badge_dark_rounded"
-            android:paddingHorizontal="14dp"
-            android:paddingVertical="7dp"/>
+            android:layout_height="32dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="10dp"
+            android:paddingEnd="12dp"
+            android:background="@drawable/badge_dark_rounded">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="●"
+                android:textColor="#4ADE80"
+                android:textSize="7sp"
+                android:layout_marginEnd="5dp"/>
+
+            <TextView
+                android:id="@+id/tvParticipantCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1 in call"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"/>
+
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvCallDuration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="00:00"
-            android:textColor="#B0C4DE"
-            android:textSize="12sp"
+            android:textColor="#94A3B8"
+            android:textSize="11sp"
             android:layout_marginTop="6dp"
-            android:paddingHorizontal="6dp"/>
+            android:paddingHorizontal="4dp"/>
 
     </LinearLayout>
 
-    <!-- ── Control Panel (pinned at bottom, never scrolls away) ── -->
+    <!-- ══════════════════════════════════════════════
+         COMPACT CONTROL PANEL — single row, 100dp tall
+         Leaves maximum space for video grid
+         ══════════════════════════════════════════════ -->
     <LinearLayout
         android:id="@+id/controlPanel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:orientation="vertical"
-        android:paddingHorizontal="20dp"
-        android:paddingBottom="36dp"
-        android:paddingTop="12dp">
+        android:paddingTop="14dp"
+        android:paddingBottom="28dp"
+        android:paddingHorizontal="8dp"
+        android:background="@drawable/control_panel_bg">
 
-        <!-- Button labels -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="6dp">
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="Mute"     android:textColor="#78909C" android:textSize="10sp"/>
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="Camera"   android:textColor="#78909C" android:textSize="10sp"/>
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="Flip"     android:textColor="#78909C" android:textSize="10sp"/>
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="Mute All" android:textColor="#78909C" android:textSize="10sp"/>
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="End"      android:textColor="#78909C" android:textSize="10sp"/>
-        </LinearLayout>
-
-        <!-- Buttons -->
+        <!-- Single row: all 5 buttons + labels together -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center">
-                <ImageButton android:id="@+id/btnMute"
-                    android:layout_width="58dp" android:layout_height="58dp"
-                    android:layout_gravity="center"
+            <!-- Mute -->
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <ImageButton
+                    android:id="@+id/btnMute"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
                     android:background="@drawable/btn_control_normal"
                     android:src="@drawable/ic_mic"
-                    android:contentDescription="Mute" android:elevation="4dp"/>
-            </FrameLayout>
+                    android:padding="13dp"
+                    android:contentDescription="Mute"
+                    android:elevation="4dp"
+                    android:scaleType="fitCenter"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mute"
+                    android:textColor="#64748B"
+                    android:textSize="10sp"
+                    android:layout_marginTop="5dp"/>
+            </LinearLayout>
 
-            <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center">
-                <ImageButton android:id="@+id/btnVideo"
-                    android:layout_width="58dp" android:layout_height="58dp"
-                    android:layout_gravity="center"
+            <!-- Camera -->
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <ImageButton
+                    android:id="@+id/btnVideo"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
                     android:background="@drawable/btn_control_normal"
                     android:src="@drawable/ic_video"
-                    android:contentDescription="Camera" android:elevation="4dp"/>
-            </FrameLayout>
+                    android:padding="13dp"
+                    android:contentDescription="Camera"
+                    android:elevation="4dp"
+                    android:scaleType="fitCenter"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Camera"
+                    android:textColor="#64748B"
+                    android:textSize="10sp"
+                    android:layout_marginTop="5dp"/>
+            </LinearLayout>
 
-            <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center">
-                <ImageButton android:id="@+id/btnSwitchCamera"
-                    android:layout_width="52dp" android:layout_height="52dp"
-                    android:layout_gravity="center"
-                    android:background="@drawable/btn_control_normal"
-                    android:src="@android:drawable/ic_menu_rotate"
-                    android:contentDescription="Flip Camera"
-                    app:tint="#90CAF9" android:elevation="4dp"/>
-            </FrameLayout>
-
-            <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center">
-                <ImageButton android:id="@+id/btnMuteAll"
-                    android:layout_width="52dp" android:layout_height="52dp"
-                    android:layout_gravity="center"
-                    android:background="@drawable/btn_control_normal"
-                    android:src="@android:drawable/ic_lock_silent_mode"
-                    android:contentDescription="Mute All"
-                    app:tint="#90CAF9" android:elevation="4dp"/>
-            </FrameLayout>
-
-            <FrameLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center">
-                <ImageButton android:id="@+id/btnEndCall"
-                    android:layout_width="62dp" android:layout_height="62dp"
-                    android:layout_gravity="center"
+            <!-- End Call — bigger, centered, stands out -->
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <ImageButton
+                    android:id="@+id/btnEndCall"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
                     android:background="@drawable/btn_end_call"
                     android:src="@drawable/ic_call_end"
-                    android:contentDescription="End Call" android:elevation="8dp"/>
-            </FrameLayout>
+                    android:padding="16dp"
+                    android:contentDescription="End Call"
+                    android:elevation="12dp"
+                    android:scaleType="fitCenter"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="End"
+                    android:textColor="#F87171"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="5dp"/>
+            </LinearLayout>
+
+            <!-- Flip -->
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <ImageButton
+                    android:id="@+id/btnSwitchCamera"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:background="@drawable/btn_control_normal"
+                    android:src="@android:drawable/ic_menu_rotate"
+                    android:padding="13dp"
+                    android:contentDescription="Flip Camera"
+                    android:elevation="4dp"
+                    android:scaleType="fitCenter"
+                    app:tint="#90CAF9"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Flip"
+                    android:textColor="#64748B"
+                    android:textSize="10sp"
+                    android:layout_marginTop="5dp"/>
+            </LinearLayout>
+
+            <!-- Mute All -->
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <ImageButton
+                    android:id="@+id/btnMuteAll"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:background="@drawable/btn_control_normal"
+                    android:src="@android:drawable/ic_lock_silent_mode"
+                    android:padding="13dp"
+                    android:contentDescription="Mute All"
+                    android:elevation="4dp"
+                    android:scaleType="fitCenter"
+                    app:tint="#90CAF9"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mute All"
+                    android:textColor="#64748B"
+                    android:textSize="10sp"
+                    android:layout_marginTop="5dp"/>
+            </LinearLayout>
 
         </LinearLayout>
     </LinearLayout>
