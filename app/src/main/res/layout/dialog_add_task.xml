@@ -1,47 +1,216 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- res/layout/dialog_add_task.xml -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="20dp">
+    android:padding="20dp"
+    android:background="#121826">
 
+    <!-- Task title -->
     <TextView
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Add New Task"
-        android:textSize="20sp"
+        android:text="TASK TITLE"
+        android:textSize="10sp"
         android:textStyle="bold"
-        android:layout_marginBottom="16dp"/>
+        android:textColor="#4CAF50"
+        android:letterSpacing="0.12"
+        android:layout_marginBottom="8dp"/>
 
-    <EditText
-        android:id="@+id/etTaskTitle"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Enter task title"
-        android:inputType="text"
-        android:padding="12dp"
-        android:layout_marginBottom="16dp"/>
+        android:hint="What do you need to do?"
+        app:boxBackgroundMode="filled"
+        app:boxBackgroundColor="#0D1520"
+        app:boxStrokeColor="#4CAF50"
+        app:hintTextColor="#506070"
+        app:boxStrokeWidth="2dp"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp"
+        android:layout_marginBottom="16dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etTaskTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:padding="14dp"
+            android:inputType="textCapSentences"
+            android:maxLines="2"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Optional note -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="NOTE (OPTIONAL)"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:textColor="#4CAF50"
+        android:letterSpacing="0.12"
+        android:layout_marginBottom="8dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Add extra details..."
+        app:boxBackgroundMode="filled"
+        app:boxBackgroundColor="#0D1520"
+        app:boxStrokeColor="#1E3048"
+        app:hintTextColor="#506070"
+        app:boxStrokeWidth="1dp"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp"
+        android:layout_marginBottom="20dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etTaskNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#CCCCCC"
+            android:textSize="14sp"
+            android:padding="14dp"
+            android:inputType="textCapSentences"
+            android:maxLines="2"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Priority selector -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PRIORITY"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:textColor="#4CAF50"
+        android:letterSpacing="0.12"
+        android:layout_marginBottom="10dp"/>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="end">
+        android:layout_marginBottom="20dp">
 
-        <Button
-            android:id="@+id/btnCancelTask"
+        <!-- Low -->
+        <LinearLayout
+            android:id="@+id/priorityLow"
+            android:layout_width="0dp"
+            android:layout_height="42dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/priority_low_bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:alpha="0.4">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🟢 Low"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#4CAF50"/>
+        </LinearLayout>
+
+        <!-- Medium -->
+        <LinearLayout
+            android:id="@+id/priorityMedium"
+            android:layout_width="0dp"
+            android:layout_height="42dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/priority_medium_bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:alpha="1.0">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🟠 Med"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#FF9800"/>
+        </LinearLayout>
+
+        <!-- High -->
+        <LinearLayout
+            android:id="@+id/priorityHigh"
+            android:layout_width="0dp"
+            android:layout_height="42dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:background="@drawable/priority_high_bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:alpha="0.4">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔴 High"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#EF5350"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Due date picker -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="DUE DATE (OPTIONAL)"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:textColor="#4CAF50"
+        android:letterSpacing="0.12"
+        android:layout_marginBottom="10dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="4dp">
+
+        <LinearLayout
+            android:id="@+id/btnPickDate"
+            android:layout_width="wrap_content"
+            android:layout_height="42dp"
+            android:gravity="center"
+            android:paddingHorizontal="16dp"
+            android:background="@drawable/btn_pick_date_bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginEnd="12dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📅 Pick Date"
+                android:textSize="13sp"
+                android:textColor="#90CAF9"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvSelectedDueDate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cancel"
-            android:backgroundTint="#757575"
-            android:layout_marginEnd="8dp"/>
+            android:text="No date set"
+            android:textSize="13sp"
+            android:textColor="#3D5060"/>
 
-        <Button
-            android:id="@+id/btnSaveTask"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Add Task"
-            android:backgroundTint="#8E24AA"/>
     </LinearLayout>
 
 </LinearLayout>

@@ -18,7 +18,7 @@
             android:orientation="vertical">
 
             <!-- ══════════════════════════════════════
-                 HEADER — matches dashboard style
+                 HEADER
                  ══════════════════════════════════════ -->
             <RelativeLayout
                 android:layout_width="match_parent"
@@ -27,7 +27,6 @@
                 android:padding="24dp"
                 android:paddingBottom="32dp">
 
-                <!-- Title block -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -70,7 +69,7 @@
             </RelativeLayout>
 
             <!-- ══════════════════════════════════════
-                 MODE SELECTOR TABS — Create / Join
+                 TAB SELECTOR
                  ══════════════════════════════════════ -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -138,7 +137,7 @@
                 android:paddingTop="20dp"
                 android:visibility="visible">
 
-                <!-- Illustration card -->
+                <!-- Hero card -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/cardCreateRoom"
                     android:layout_width="match_parent"
@@ -192,7 +191,71 @@
 
                 </androidx.cardview.widget.CardView>
 
-                <!-- What you get info cards -->
+                <!-- Room name input -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="6dp"
+                    app:cardBackgroundColor="#161F2C"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="22dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ROOM NAME"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            android:textColor="#4CAF50"
+                            android:letterSpacing="0.12"
+                            android:layout_marginBottom="12dp"/>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="e.g. Physics Finals Group"
+                            app:boxBackgroundMode="filled"
+                            app:boxBackgroundColor="#0D1520"
+                            app:boxStrokeColor="#4CAF50"
+                            app:hintTextColor="#506070"
+                            app:boxStrokeWidth="2dp"
+                            app:boxCornerRadiusTopStart="14dp"
+                            app:boxCornerRadiusTopEnd="14dp"
+                            app:boxCornerRadiusBottomStart="14dp"
+                            app:boxCornerRadiusBottomEnd="14dp"
+                            android:layout_marginBottom="8dp">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etRoomName"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="textCapSentences"
+                                android:textColor="#FFFFFF"
+                                android:textSize="15sp"
+                                android:padding="16dp"
+                                android:maxLength="40"
+                                android:imeOptions="actionDone"/>
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Optional — leave blank to use the room code"
+                            android:textSize="11sp"
+                            android:textColor="#3D5060"/>
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <!-- Feature info cards -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -200,18 +263,12 @@
                     android:layout_marginBottom="20dp">
 
                     <androidx.cardview.widget.CardView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="8dp"
-                        app:cardCornerRadius="14dp"
-                        app:cardElevation="4dp"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:layout_marginEnd="8dp"
+                        app:cardCornerRadius="14dp" app:cardElevation="4dp"
                         app:cardBackgroundColor="#131D2B">
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="14dp">
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:orientation="vertical" android:padding="14dp">
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                                 android:text="💬" android:textSize="22sp" android:layout_marginBottom="6dp"/>
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -224,18 +281,12 @@
                     </androidx.cardview.widget.CardView>
 
                     <androidx.cardview.widget.CardView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="8dp"
-                        app:cardCornerRadius="14dp"
-                        app:cardElevation="4dp"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:layout_marginEnd="8dp"
+                        app:cardCornerRadius="14dp" app:cardElevation="4dp"
                         app:cardBackgroundColor="#131D2B">
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="14dp">
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:orientation="vertical" android:padding="14dp">
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                                 android:text="📁" android:textSize="22sp" android:layout_marginBottom="6dp"/>
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -248,17 +299,12 @@
                     </androidx.cardview.widget.CardView>
 
                     <androidx.cardview.widget.CardView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        app:cardCornerRadius="14dp"
-                        app:cardElevation="4dp"
+                        app:cardCornerRadius="14dp" app:cardElevation="4dp"
                         app:cardBackgroundColor="#131D2B">
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="14dp">
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:orientation="vertical" android:padding="14dp">
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                                 android:text="🎥" android:textSize="22sp" android:layout_marginBottom="6dp"/>
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -300,7 +346,7 @@
                 android:paddingTop="20dp"
                 android:visibility="gone">
 
-                <!-- Illustration card -->
+                <!-- Hero card -->
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -357,7 +403,7 @@
                     app:cardCornerRadius="20dp"
                     app:cardElevation="6dp"
                     app:cardBackgroundColor="#161F2C"
-                    android:layout_marginBottom="16dp">
+                    android:layout_marginBottom="12dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -365,45 +411,94 @@
                         android:orientation="vertical"
                         android:padding="22dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="ROOM CODE"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
-                            android:textColor="#4CAF50"
-                            android:letterSpacing="0.12"
-                            android:layout_marginBottom="12dp"/>
-
-                        <com.google.android.material.textfield.TextInputLayout
+                        <!-- Label + live counter row -->
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="e.g. AB12CD"
-                            app:boxBackgroundMode="filled"
-                            app:boxBackgroundColor="#0D1520"
-                            app:boxStrokeColor="#4CAF50"
-                            app:hintTextColor="#506070"
-                            app:boxStrokeWidth="2dp"
-                            app:boxCornerRadiusTopStart="14dp"
-                            app:boxCornerRadiusTopEnd="14dp"
-                            app:boxCornerRadiusBottomStart="14dp"
-                            app:boxCornerRadiusBottomEnd="14dp"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="12dp">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="ROOM CODE"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:textColor="#4CAF50"
+                                android:letterSpacing="0.12"/>
+
+                            <TextView
+                                android:id="@+id/tvCharCounter"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="0 / 6"
+                                android:textSize="11sp"
+                                android:textColor="#3D5060"/>
+
+                        </LinearLayout>
+
+                        <!-- Input + paste button -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
                             android:layout_marginBottom="8dp">
 
-                            <com.google.android.material.textfield.TextInputEditText
-                                android:id="@+id/etRoomCode"
-                                android:layout_width="match_parent"
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:inputType="textCapCharacters"
-                                android:textColor="#FFFFFF"
-                                android:textSize="22sp"
-                                android:letterSpacing="0.18"
-                                android:textStyle="bold"
-                                android:gravity="center"
-                                android:padding="16dp"
-                                android:maxLength="6"/>
+                                android:layout_weight="1"
+                                android:hint="e.g. AB12CD"
+                                app:boxBackgroundMode="filled"
+                                app:boxBackgroundColor="#0D1520"
+                                app:boxStrokeColor="#4CAF50"
+                                app:hintTextColor="#506070"
+                                app:boxStrokeWidth="2dp"
+                                app:boxCornerRadiusTopStart="14dp"
+                                app:boxCornerRadiusTopEnd="14dp"
+                                app:boxCornerRadiusBottomStart="14dp"
+                                app:boxCornerRadiusBottomEnd="14dp"
+                                android:layout_marginEnd="10dp">
 
-                        </com.google.android.material.textfield.TextInputLayout>
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/etRoomCode"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:inputType="textCapCharacters"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="22sp"
+                                    android:letterSpacing="0.18"
+                                    android:textStyle="bold"
+                                    android:gravity="center"
+                                    android:padding="16dp"
+                                    android:maxLength="6"
+                                    android:imeOptions="actionDone"/>
+
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <!-- 📋 Paste button -->
+                            <LinearLayout
+                                android:id="@+id/btnPaste"
+                                android:layout_width="56dp"
+                                android:layout_height="56dp"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:background="@drawable/btn_paste_bg"
+                                android:clickable="true"
+                                android:focusable="true">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="📋"
+                                    android:textSize="20sp"/>
+
+                            </LinearLayout>
+
+                        </LinearLayout>
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -415,6 +510,42 @@
                     </LinearLayout>
 
                 </androidx.cardview.widget.CardView>
+
+                <!-- Recent rooms quick-tap chips -->
+                <LinearLayout
+                    android:id="@+id/recentCodesSection"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginBottom="16dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="RECENT ROOMS"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:textColor="#4CAF50"
+                        android:letterSpacing="0.12"
+                        android:layout_marginBottom="10dp"/>
+
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:scrollbars="none"
+                        android:overScrollMode="never">
+
+                        <LinearLayout
+                            android:id="@+id/recentCodesContainer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:paddingBottom="4dp"/>
+
+                    </HorizontalScrollView>
+
+                </LinearLayout>
 
                 <!-- Join button -->
                 <Button
@@ -432,7 +563,25 @@
 
             </LinearLayout>
 
-            <!-- Progress bar — centered, shown during loading -->
+            <!-- Loading skeleton -->
+            <LinearLayout
+                android:id="@+id/skeletonView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="20dp"
+                android:visibility="gone">
+
+                <View android:layout_width="match_parent" android:layout_height="130dp"
+                    android:background="@drawable/skeleton_bg" android:layout_marginBottom="16dp"/>
+                <View android:layout_width="match_parent" android:layout_height="80dp"
+                    android:background="@drawable/skeleton_bg" android:layout_marginBottom="16dp"/>
+                <View android:layout_width="match_parent" android:layout_height="58dp"
+                    android:background="@drawable/skeleton_bg"/>
+
+            </LinearLayout>
+
             <ProgressBar
                 android:id="@+id/progressBar"
                 android:layout_width="wrap_content"
