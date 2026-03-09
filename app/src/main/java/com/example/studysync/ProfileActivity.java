@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -101,8 +102,21 @@ public class ProfileActivity extends AppCompatActivity {
         rowChangePhoto.setOnClickListener(v -> imagePicker.launch("image/*"));
 
         btnLogout.setOnClickListener(v -> {
-            auth.signOut();
-            finish();
+            new AlertDialog.Builder(this, R.style.DarkDialogTheme)
+                    .setTitle("Log Out")
+                    .setMessage("Are you sure you want to log out?")
+                    .setPositiveButton("Log Out", (dialog, which) -> {
+                        auth.signOut();
+                        // Clear the entire back stack so the user can't
+                        // press Back and return to MainActivity after logout
+                        Intent intent = new Intent(this, LoginActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        finish();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
         });
     }
 

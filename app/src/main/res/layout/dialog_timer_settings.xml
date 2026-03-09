@@ -1,115 +1,144 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<!-- res/layout/dialog_timer_settings.xml -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#0B0F1A"
-    android:padding="24dp">
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="#121826">
 
-    <!-- Floating Premium Card -->
-    <androidx.cardview.widget.CardView
+    <!-- Work duration -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="WORK DURATION"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:textColor="#4CAF50"
+        android:letterSpacing="0.12"
+        android:layout_marginBottom="6dp"/>
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="12dp"
-        app:cardBackgroundColor="#121826">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="4dp">
+
+        <SeekBar
+            android:id="@+id/sbWorkDuration"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:progressTint="#4CAF50"
+            android:thumbTint="#4CAF50"
+            android:layout_marginEnd="12dp"/>
+
+        <TextView
+            android:id="@+id/tvWorkValue"
+            android:layout_width="52dp"
+            android:layout_height="wrap_content"
+            android:text="25 min"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:gravity="end"/>
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="1 min ←————————————→ 60 min"
+        android:textSize="10sp"
+        android:textColor="#3D5060"
+        android:layout_marginBottom="20dp"/>
+
+    <!-- Break duration -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="BREAK DURATION"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:textColor="#2196F3"
+        android:letterSpacing="0.12"
+        android:layout_marginBottom="6dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="4dp">
+
+        <SeekBar
+            android:id="@+id/sbBreakDuration"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:progressTint="#2196F3"
+            android:thumbTint="#2196F3"
+            android:layout_marginEnd="12dp"/>
+
+        <TextView
+            android:id="@+id/tvBreakValue"
+            android:layout_width="52dp"
+            android:layout_height="wrap_content"
+            android:text="5 min"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:gravity="end"/>
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="1 min ←————————————→ 60 min"
+        android:textSize="10sp"
+        android:textColor="#3D5060"
+        android:layout_marginBottom="24dp"/>
+
+    <!-- Live preview -->
+    <androidx.cardview.widget.CardView
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="0dp"
+        app:cardBackgroundColor="#0D1520">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="28dp">
+            android:padding="16dp"
+            android:gravity="center">
 
-            <!-- Title -->
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="⚙ Timer Settings"
-                android:textSize="24sp"
+                android:text="PREVIEW"
+                android:textSize="9sp"
+                android:textColor="#3D5060"
+                android:letterSpacing="0.15"
+                android:layout_marginBottom="6dp"/>
+
+            <TextView
+                android:id="@+id/tvSettingsPreview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Work 25 min → Break 5 min"
+                android:textSize="15sp"
                 android:textStyle="bold"
-                android:gravity="center"
-                android:textColor="#E0C68C"
-                android:letterSpacing="0.05"
-                android:layout_marginBottom="28dp"/>
-
-            <!-- Work Duration Label -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Work Session Duration (minutes)"
-                android:textSize="13sp"
-                android:textColor="#9FA8DA"
-                android:layout_marginBottom="8dp"/>
-
-            <!-- Work Duration Input -->
-            <EditText
-                android:id="@+id/etWorkDuration"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:hint="25"
-                android:inputType="number"
-                android:textSize="18sp"
                 android:textColor="#FFFFFF"
-                android:textColorHint="#666666"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="@drawable/premium_input_background"
-                android:layout_marginBottom="24dp"/>
-
-            <!-- Break Duration Label -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Break Duration (minutes)"
-                android:textSize="13sp"
-                android:textColor="#9FA8DA"
-                android:layout_marginBottom="8dp"/>
-
-            <!-- Break Duration Input -->
-            <EditText
-                android:id="@+id/etBreakDuration"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:hint="5"
-                android:inputType="number"
-                android:textSize="18sp"
-                android:textColor="#FFFFFF"
-                android:textColorHint="#666666"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="@drawable/premium_input_background"
-                android:layout_marginBottom="32dp"/>
-
-            <!-- Buttons -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="end">
-
-                <Button
-                    android:id="@+id/btnCancelSettings"
-                    android:layout_width="wrap_content"
-                    android:layout_height="48dp"
-                    android:text="Cancel"
-                    android:textAllCaps="false"
-                    android:textColor="#CCCCCC"
-                    android:background="@drawable/premium_cancel_button"
-                    android:layout_marginEnd="16dp"/>
-
-                <Button
-                    android:id="@+id/btnSaveSettings"
-                    android:layout_width="wrap_content"
-                    android:layout_height="48dp"
-                    android:text="Save"
-                    android:textAllCaps="false"
-                    android:textColor="#000000"
-                    android:background="@drawable/premium_save_button"/>
-
-            </LinearLayout>
+                android:gravity="center"/>
 
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
 
-</RelativeLayout>
+</LinearLayout>

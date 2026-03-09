@@ -3,27 +3,50 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0E0E0E"
-    android:padding="24dp">
+    android:background="#0E0E0E">
 
-    <!-- Title -->
-    <TextView
-        android:id="@+id/tvTimerTitle"
-        android:layout_width="wrap_content"
+    <!-- ══════════════════════════════════════
+         HEADER — title + room name subtitle
+         ══════════════════════════════════════ -->
+    <LinearLayout
+        android:id="@+id/headerLayout"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Pomodoro"
-        android:textSize="26sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"/>
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingTop="32dp"
+        android:paddingBottom="8dp">
 
-    <!-- Circular Timer Container -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" Pomodoro"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"/>
+
+        <!-- Room name subtitle -->
+        <TextView
+            android:id="@+id/tvRoomName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Loading..."
+            android:textSize="13sp"
+            android:textColor="#4CAF50"
+            android:layout_marginTop="4dp"/>
+
+    </LinearLayout>
+
+    <!-- ══════════════════════════════════════
+         CIRCULAR TIMER
+         ══════════════════════════════════════ -->
     <FrameLayout
         android:id="@+id/timerContainer"
         android:layout_width="280dp"
         android:layout_height="280dp"
-        android:layout_centerInParent="true">
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/headerLayout"
+        android:layout_marginTop="16dp">
 
         <ProgressBar
             android:id="@+id/circularProgress"
@@ -32,6 +55,7 @@
             android:layout_height="match_parent"
             android:progressDrawable="@drawable/circular_progress_drawable"
             android:max="100"
+            android:progress="0"
             android:rotation="-90"/>
 
         <LinearLayout
@@ -44,7 +68,7 @@
                 android:id="@+id/tvTimerType"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Work Session"
+                android:text="🎯 Work Session"
                 android:textColor="#AAAAAA"
                 android:textSize="14sp"/>
 
@@ -71,61 +95,89 @@
 
     </FrameLayout>
 
-    <!-- Buttons -->
+    <!-- ══════════════════════════════════════
+         SESSION COUNT — 🍅 tomato icons
+         ══════════════════════════════════════ -->
+    <TextView
+        android:id="@+id/tvSessionCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/timerContainer"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:text="No sessions yet"
+        android:textSize="20sp"
+        android:textColor="#777777"
+        android:gravity="center"/>
+
+    <!-- ══════════════════════════════════════
+         BUTTONS
+         ══════════════════════════════════════ -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:orientation="vertical"
-        android:layout_marginBottom="40dp">
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="36dp">
 
+        <!-- Start/Pause toggle (single button) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnStartPause"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:text="▶ Start"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            app:cornerRadius="16dp"
+            app:backgroundTint="#4CAF50"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="10dp"/>
+
+        <!-- Skip + Reset row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnStart"
+                android:id="@+id/btnSkip"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="48dp"
-                android:text="Start"
-                app:cornerRadius="14dp"
-                app:backgroundTint="#4CAF50"
+                android:text="⏭ Skip"
+                android:textAllCaps="false"
                 android:textColor="#FFFFFF"
+                app:cornerRadius="14dp"
+                app:backgroundTint="#1565C0"
                 android:layout_marginEnd="8dp"/>
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnStop"
+                android:id="@+id/btnReset"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="48dp"
-                android:text="pause"
-                app:cornerRadius="14dp"
-                app:backgroundTint="#E53935"
+                android:text="↺ Reset"
+                android:textAllCaps="false"
                 android:textColor="#FFFFFF"
+                app:cornerRadius="14dp"
+                app:backgroundTint="#2A2A2A"
                 android:layout_marginStart="8dp"/>
+
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnReset"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="Reset"
-            app:cornerRadius="14dp"
-            app:backgroundTint="#2A2A2A"
-            android:textColor="#FFFFFF"
-            android:layout_marginTop="12dp"/>
-
+        <!-- Settings -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSettings"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:text="⚙ Settings"
+            android:textAllCaps="false"
+            android:textColor="#AAAAAA"
             app:cornerRadius="14dp"
-            app:backgroundTint="#3A3A3A"
-            android:textColor="#FFFFFF"
-            android:layout_marginTop="12dp"/>
+            app:backgroundTint="#1A1A1A"
+            android:layout_marginTop="10dp"/>
 
     </LinearLayout>
 

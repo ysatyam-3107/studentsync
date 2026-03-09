@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0F0F0F"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:scrollbars="none">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -13,7 +14,9 @@
         android:padding="24dp"
         android:gravity="center_horizontal">
 
-        <!-- Header -->
+        <!-- ══════════════════════════════════════
+             HEADER
+             ══════════════════════════════════════ -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -32,25 +35,58 @@
             android:textColor="#808080"
             android:layout_marginBottom="28dp"/>
 
-        <!-- Profile Image -->
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:id="@+id/imgProfile"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:src="@drawable/ic_profile_circle"
-            android:layout_marginBottom="8dp"
-            app:civ_border_width="2dp"
-            app:civ_border_color="#4CAF50"/>
+        <!-- ══════════════════════════════════════
+             PROFILE PHOTO — circle + camera overlay
+             ══════════════════════════════════════ -->
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp">
 
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/imgProfile"
+                android:layout_width="110dp"
+                android:layout_height="110dp"
+                android:src="@drawable/ic_profile_circle"
+                android:clickable="true"
+                android:focusable="true"
+                app:civ_border_width="2dp"
+                app:civ_border_color="#4CAF50"/>
+
+            <!-- Camera badge — bottom-right corner -->
+            <LinearLayout
+                android:id="@+id/cameraBadge"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="bottom|end"
+                android:gravity="center"
+                android:background="@drawable/camera_badge_bg"
+                android:clickable="false"
+                android:focusable="false">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📷"
+                    android:textSize="14sp"/>
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+        <!-- Photo hint text — changes after selection -->
         <TextView
+            android:id="@+id/tvPhotoHint"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Tap to select profile photo"
             android:textSize="12sp"
             android:textColor="#808080"
-            android:layout_marginBottom="24dp"/>
+            android:layout_marginBottom="28dp"/>
 
-        <!-- Name Field -->
+        <!-- ══════════════════════════════════════
+             FULL NAME
+             ══════════════════════════════════════ -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -58,6 +94,7 @@
             app:boxBackgroundMode="filled"
             app:boxBackgroundColor="#1A1A1A"
             app:boxStrokeColor="#4CAF50"
+            app:hintTextColor="#808080"
             app:boxCornerRadiusTopStart="14dp"
             app:boxCornerRadiusTopEnd="14dp"
             app:boxCornerRadiusBottomStart="14dp"
@@ -69,11 +106,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="#FFFFFF"
-                android:padding="14dp"/>
+                android:padding="14dp"
+                android:inputType="textPersonName|textCapWords"
+                android:imeOptions="actionNext"
+                android:nextFocusDown="@+id/etEmailReg"/>
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Email -->
+        <!-- ══════════════════════════════════════
+             EMAIL
+             ══════════════════════════════════════ -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -81,6 +123,11 @@
             app:boxBackgroundMode="filled"
             app:boxBackgroundColor="#1A1A1A"
             app:boxStrokeColor="#4CAF50"
+            app:hintTextColor="#808080"
+            app:boxCornerRadiusTopStart="14dp"
+            app:boxCornerRadiusTopEnd="14dp"
+            app:boxCornerRadiusBottomStart="14dp"
+            app:boxCornerRadiusBottomEnd="14dp"
             android:layout_marginBottom="16dp">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -89,11 +136,15 @@
                 android:layout_height="wrap_content"
                 android:inputType="textEmailAddress"
                 android:textColor="#FFFFFF"
-                android:padding="14dp"/>
+                android:padding="14dp"
+                android:imeOptions="actionNext"
+                android:nextFocusDown="@+id/etPasswordReg"/>
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Password -->
+        <!-- ══════════════════════════════════════
+             PASSWORD + STRENGTH INDICATOR
+             ══════════════════════════════════════ -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -102,7 +153,12 @@
             app:boxBackgroundMode="filled"
             app:boxBackgroundColor="#1A1A1A"
             app:boxStrokeColor="#4CAF50"
-            android:layout_marginBottom="24dp">
+            app:hintTextColor="#808080"
+            app:boxCornerRadiusTopStart="14dp"
+            app:boxCornerRadiusTopEnd="14dp"
+            app:boxCornerRadiusBottomStart="14dp"
+            app:boxCornerRadiusBottomEnd="14dp"
+            android:layout_marginBottom="8dp">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPasswordReg"
@@ -110,24 +166,126 @@
                 android:layout_height="wrap_content"
                 android:inputType="textPassword"
                 android:textColor="#FFFFFF"
-                android:padding="14dp"/>
+                android:padding="14dp"
+                android:imeOptions="actionNext"
+                android:nextFocusDown="@+id/etConfirmPassword"/>
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Register Button -->
-        <Button
-            android:id="@+id/btnRegisterNow"
+        <!-- Password strength bar + label -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <ProgressBar
+                android:id="@+id/strengthBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="0dp"
+                android:layout_height="5dp"
+                android:layout_weight="1"
+                android:max="3"
+                android:progress="0"
+                android:progressDrawable="@drawable/strength_bar_drawable"
+                android:layout_marginEnd="10dp"/>
+
+            <TextView
+                android:id="@+id/tvStrengthLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:minWidth="50dp"
+                android:gravity="end"/>
+
+        </LinearLayout>
+
+        <!-- ══════════════════════════════════════
+             CONFIRM PASSWORD
+             ══════════════════════════════════════ -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Confirm Password"
+            app:endIconMode="password_toggle"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="#1A1A1A"
+            app:boxStrokeColor="#4CAF50"
+            app:hintTextColor="#808080"
+            app:boxCornerRadiusTopStart="14dp"
+            app:boxCornerRadiusTopEnd="14dp"
+            app:boxCornerRadiusBottomStart="14dp"
+            app:boxCornerRadiusBottomEnd="14dp"
+            android:layout_marginBottom="28dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etConfirmPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"
+                android:textColor="#FFFFFF"
+                android:padding="14dp"
+                android:imeOptions="actionDone"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- ══════════════════════════════════════
+             REGISTER BUTTON (with overlay progress)
+             ══════════════════════════════════════ -->
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:text="Register"
-            android:textAllCaps="false"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:background="@drawable/register_button_bg"
-            android:layout_marginBottom="18dp"/>
+            android:layout_marginBottom="18dp">
 
-        <!-- Login Link -->
+            <Button
+                android:id="@+id/btnRegisterNow"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Create Account"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/register_button_bg"/>
+
+            <!-- Spinner overlaid on button while loading -->
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                android:indeterminateTint="#FFFFFF"/>
+
+        </FrameLayout>
+
+        <!-- ══════════════════════════════════════
+             SUCCESS OVERLAY (shown briefly on success)
+             ══════════════════════════════════════ -->
+        <LinearLayout
+            android:id="@+id/successOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:gravity="center"
+            android:background="@drawable/success_btn_bg"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            android:layout_marginBottom="18dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✅  Account Created!"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"/>
+
+        </LinearLayout>
+
+        <!-- Login link -->
         <TextView
             android:id="@+id/tvLoginHere"
             android:layout_width="wrap_content"
@@ -135,16 +293,8 @@
             android:text="Already have an account? Login"
             android:textSize="14sp"
             android:textColor="#4CAF50"
-            android:textStyle="bold"/>
-
-        <!-- Progress -->
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:visibility="gone"
-            android:indeterminateTint="#4CAF50"/>
+            android:textStyle="bold"
+            android:paddingBottom="24dp"/>
 
     </LinearLayout>
 
