@@ -1,9 +1,11 @@
 package com.example.studysync;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresPermission;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
 import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
@@ -27,6 +29,9 @@ import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class PomodoroActivity extends AppCompatActivity {
 
     // ── Views ──────────────────────────────────────────────────────────────────
@@ -42,8 +47,8 @@ public class PomodoroActivity extends AppCompatActivity {
     private int            workDuration  = 25;
     private int            breakDuration = 5;
     private long           remainingMillis = 0;
-    private long           totalSessionMillis = 0; // for progress %
-    private int            sessionCount = 0;       // completed pomodoros
+    private long           totalSessionMillis = 0;
+    private int            sessionCount = 0;
 
     // ── Firebase ───────────────────────────────────────────────────────────────
     private String             roomCode;
@@ -51,11 +56,16 @@ public class PomodoroActivity extends AppCompatActivity {
     private ValueEventListener timerListener;
 
     // ── Colors ─────────────────────────────────────────────────────────────────
-    private static final int COLOR_WORK  = 0xFF4CAF50; // green
-    private static final int COLOR_BREAK = 0xFF2196F3; // blue
-    private static final int COLOR_PAUSE = 0xFFAAAAAA; // grey
+    private static final int COLOR_WORK  = 0xFF4CAF50;
+    private static final int COLOR_BREAK = 0xFF2196F3;
+    private static final int COLOR_PAUSE = 0xFFAAAAAA;
+
+    // ── Focus Score ────────────────────────────────────────────────────────────
+    private FocusTracker focusTracker;
+    private long         sessionStartTime = 0;
 
     // ──────────────────────────────────────────────────────────────────────────
+    @RequiresPermission(Manifest.permission.VIBRATE)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,6 +73,8 @@ public class PomodoroActivity extends AppCompatActivity {
 
         roomCode = getIntent().getStringExtra("roomCode");
         if (roomCode == null) { finish(); return; }
+
+        focusTracker = new FocusTracker();   // ← NEW
 
         initViews();
 
@@ -75,7 +87,27 @@ public class PomodoroActivity extends AppCompatActivity {
         loadTimerSettings();
     }
 
+    // ── onStop / onStart — track distractions ─────────────────────────────────
+    // We use onStop/onStart (not onPause/onResume) so that dialogs and
+    // bottom sheets within the app do NOT count as distractions.
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (isRunning && !isBreak) {          // only track during work sessions
+            focusTracker.onUserLeft();
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (isRunning && !isBreak) {
+            focusTracker.onUserReturned();
+        }
+    }
+
     // ── View wiring ────────────────────────────────────────────────────────────
+    @RequiresPermission(Manifest.permission.VIBRATE)
     private void initViews() {
         tvTimer        = findViewById(R.id.tvTimer);
         tvStatus       = findViewById(R.id.tvStatus);
@@ -95,12 +127,11 @@ public class PomodoroActivity extends AppCompatActivity {
         btnSkip.setOnClickListener(v     -> skipSession());
         btnSettings.setOnClickListener(v -> showSettingsDialog());
 
-        // Show loading state until Firebase responds
         tvStatus.setText("Loading...");
         tvTimer.setText("--:--");
     }
 
-    // ── Load room name for subtitle ────────────────────────────────────────────
+    // ── Load room name ─────────────────────────────────────────────────────────
     private void loadRoomName() {
         FirebaseDatabase.getInstance().getReference("Rooms")
                 .child(roomCode).child("roomName")
@@ -124,7 +155,7 @@ public class PomodoroActivity extends AppCompatActivity {
                     public void onDataChange(@NonNull DataSnapshot s) {
                         String creator = s.getValue(String.class);
                         if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
-                        String myUid  = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                        String myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
                         isHost = myUid.equals(creator);
 
                         btnStartPause.setEnabled(isHost);
@@ -148,6 +179,12 @@ public class PomodoroActivity extends AppCompatActivity {
         if (remainingMillis <= 0)
             remainingMillis = (isBreak ? breakDuration : workDuration) * 60L * 1000L;
 
+        // Start focus tracking only for work sessions
+        if (!isBreak) {
+            focusTracker.startSession();
+            sessionStartTime = System.currentTimeMillis();
+        }
+
         long endTime = System.currentTimeMillis() + remainingMillis;
         timerRef.child("running").setValue(true);
         timerRef.child("endTime").setValue(endTime);
@@ -159,7 +196,10 @@ public class PomodoroActivity extends AppCompatActivity {
     private void pauseTimer() {
         if (!isHost) return;
         if (countDownTimer != null) countDownTimer.cancel();
-        // Store remaining so resume picks up from here
+
+        // Pause also means user is stepping away — end tracking temporarily
+        if (!isBreak) focusTracker.stopSession();
+
         timerRef.child("running").setValue(false);
         timerRef.child("remainingMillis").setValue(remainingMillis);
     }
@@ -168,6 +208,8 @@ public class PomodoroActivity extends AppCompatActivity {
     private void resetTimer() {
         if (!isHost) return;
         if (countDownTimer != null) countDownTimer.cancel();
+        focusTracker.stopSession();
+
         remainingMillis = (isBreak ? breakDuration : workDuration) * 60L * 1000L;
         timerRef.child("running").setValue(false);
         timerRef.child("endTime").setValue(0);
@@ -179,6 +221,7 @@ public class PomodoroActivity extends AppCompatActivity {
     }
 
     // ── Skip to next session ───────────────────────────────────────────────────
+    @RequiresPermission(Manifest.permission.VIBRATE)
     private void skipSession() {
         if (!isHost) return;
         if (countDownTimer != null) countDownTimer.cancel();
@@ -188,17 +231,18 @@ public class PomodoroActivity extends AppCompatActivity {
     // ── Firebase listener ──────────────────────────────────────────────────────
     private void listenForTimer() {
         timerListener = timerRef.addValueEventListener(new ValueEventListener() {
+            @RequiresPermission(Manifest.permission.VIBRATE)
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Boolean running      = snapshot.child("running").getValue(Boolean.class);
-                Long    endTime      = snapshot.child("endTime").getValue(Long.class);
+                Boolean running        = snapshot.child("running").getValue(Boolean.class);
+                Long    endTime        = snapshot.child("endTime").getValue(Long.class);
                 Long    savedRemaining = snapshot.child("remainingMillis").getValue(Long.class);
-                Boolean breakState   = snapshot.child("isBreak").getValue(Boolean.class);
-                Integer savedSessions = snapshot.child("sessionCount").getValue(Integer.class);
+                Boolean breakState     = snapshot.child("isBreak").getValue(Boolean.class);
+                Integer savedSessions  = snapshot.child("sessionCount").getValue(Integer.class);
 
-                if (running      == null) running      = false;
-                if (endTime      == null) endTime      = 0L;
-                if (breakState   == null) breakState   = false;
+                if (running       == null) running    = false;
+                if (endTime       == null) endTime    = 0L;
+                if (breakState    == null) breakState = false;
                 if (savedSessions != null) sessionCount = savedSessions;
 
                 isBreak = breakState;
@@ -213,7 +257,6 @@ public class PomodoroActivity extends AppCompatActivity {
                     if (countDownTimer != null) countDownTimer.cancel();
                     setRunningState(false);
 
-                    // Resume from saved remaining if available
                     if (savedRemaining != null && savedRemaining > 0) {
                         remainingMillis = savedRemaining;
                         updateTimerUI(remainingMillis);
@@ -232,6 +275,7 @@ public class PomodoroActivity extends AppCompatActivity {
     }
 
     // ── Local countdown ────────────────────────────────────────────────────────
+    @RequiresPermission(Manifest.permission.VIBRATE)
     private void startLocalTimer(long endTime) {
         if (countDownTimer != null) countDownTimer.cancel();
 
@@ -250,14 +294,25 @@ public class PomodoroActivity extends AppCompatActivity {
                 updateTimerUI(ms);
                 updateCircularProgress(ms);
             }
+            @RequiresPermission(Manifest.permission.VIBRATE)
             @Override
             public void onFinish() {
                 remainingMillis = 0;
                 updateTimerUI(0);
                 updateCircularProgress(0);
+
+                // ── Show focus score + XP when a WORK session finishes ────
+                if (!isBreak && focusTracker.isSessionActive()) {
+                    long duration = System.currentTimeMillis() - sessionStartTime;
+                    int  score    = focusTracker.calculateScore(duration);
+                    saveFocusScoreToFirebase(score);
+                    showFocusScoreDialog(score);
+                    awardXpForSession(score);   // ← NEW: XP + streak + badges
+                }
+                // ──────────────────────────────────────────────────────────
+
                 if (isHost) doSessionSwitch();
                 else {
-                    // Non-host: just show session ended, wait for Firebase update
                     tvStatus.setText("Session ended...");
                     playAlertSound();
                     vibrate();
@@ -266,9 +321,50 @@ public class PomodoroActivity extends AppCompatActivity {
         }.start();
     }
 
+    // ── Focus score: save to Firebase ─────────────────────────────────────────
+    private void saveFocusScoreToFirebase(int score) {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("focusScore",    score);
+        data.put("distractions",  focusTracker.getDistractionCount());
+        data.put("durationMs",    System.currentTimeMillis() - sessionStartTime);
+        data.put("roomCode",      roomCode);
+        data.put("timestamp",     ServerValue.TIMESTAMP);
+
+        FirebaseDatabase.getInstance()
+                .getReference("focusSessions")
+                .child(uid)
+                .push()
+                .setValue(data);
+    }
+
+    // ── Focus score: show dialog ───────────────────────────────────────────────
+    private void showFocusScoreDialog(int score) {
+        FocusScoreDialog dialog = FocusScoreDialog.newInstance(
+                score,
+                focusTracker.getDistractionCount()
+        );
+        dialog.show(getSupportFragmentManager(), "focus_score");
+    }
+
     // ── Session switch logic ───────────────────────────────────────────────────
+    // XP + streak + badges
+    private void awardXpForSession(int focusScore) {
+        XpManager.onSessionCompleted(focusScore, (xpEarned, newTotal, streak, newBadges) -> {
+            // Delay XP dialog slightly so FocusScoreDialog appears first
+            tvTimer.postDelayed(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                XpRewardDialog xpDialog = XpRewardDialog.newInstance(
+                        xpEarned, newTotal, streak, newBadges);
+                xpDialog.show(getSupportFragmentManager(), "xp_reward");
+            }, 2000);
+        });
+    }
+
+    @RequiresPermission(Manifest.permission.VIBRATE)
     private void doSessionSwitch() {
-        // Increment count only when a work session ends
         if (!isBreak) sessionCount++;
 
         isBreak = !isBreak;
@@ -298,14 +394,13 @@ public class PomodoroActivity extends AppCompatActivity {
         tvTimer.setText(String.format("%02d:%02d", minutes, seconds));
         tvTimerType.setText(isBreak
                 ? "☕ Break (" + breakDuration + " min)"
-                : "🎯 Work (" + workDuration + " min)");
+                : "🎯 Work ("  + workDuration  + " min)");
         tvTimer.setTextColor(isBreak ? COLOR_BREAK : COLOR_WORK);
     }
 
     // ── Circular progress update ───────────────────────────────────────────────
     private void updateCircularProgress(long remainingMs) {
         if (totalSessionMillis <= 0) return;
-        // Progress = elapsed % → 0 at start, 100 at end
         int elapsed = (int) (((totalSessionMillis - remainingMs) * 100) / totalSessionMillis);
         ObjectAnimator.ofInt(circularProgress, "progress", circularProgress.getProgress(), elapsed)
                 .setDuration(800)
@@ -345,18 +440,18 @@ public class PomodoroActivity extends AppCompatActivity {
         tvTimer.setTag(toColor);
     }
 
-    // ── Load settings dialog ───────────────────────────────────────────────────
+    // ── Load settings from Firebase ────────────────────────────────────────────
     private void loadTimerSettings() {
         FirebaseDatabase.getInstance().getReference("Rooms")
                 .child(roomCode).child("timerSettings")
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot s) {
-                        Integer work  = s.child("workDuration").getValue(Integer.class);
-                        Integer brk   = s.child("breakDuration").getValue(Integer.class);
+                        Integer work = s.child("workDuration").getValue(Integer.class);
+                        Integer brk  = s.child("breakDuration").getValue(Integer.class);
                         if (work != null) workDuration  = work;
                         if (brk  != null) breakDuration = brk;
-                        remainingMillis = workDuration * 60L * 1000L;
+                        remainingMillis    = workDuration * 60L * 1000L;
                         totalSessionMillis = remainingMillis;
                         updateTimerUI(remainingMillis);
                     }
@@ -369,18 +464,17 @@ public class PomodoroActivity extends AppCompatActivity {
         View view = LayoutInflater.from(this)
                 .inflate(R.layout.dialog_timer_settings, null);
 
-        SeekBar sbWork  = view.findViewById(R.id.sbWorkDuration);
-        SeekBar sbBreak = view.findViewById(R.id.sbBreakDuration);
+        SeekBar  sbWork     = view.findViewById(R.id.sbWorkDuration);
+        SeekBar  sbBreak    = view.findViewById(R.id.sbBreakDuration);
         TextView tvWorkVal  = view.findViewById(R.id.tvWorkValue);
         TextView tvBreakVal = view.findViewById(R.id.tvBreakValue);
         TextView tvPreview  = view.findViewById(R.id.tvSettingsPreview);
 
-        // SeekBar range: 1–60 min, offset by 1
         sbWork.setMax(59);
         sbBreak.setMax(59);
         sbWork.setProgress(workDuration - 1);
         sbBreak.setProgress(breakDuration - 1);
-        tvWorkVal.setText(workDuration + " min");
+        tvWorkVal.setText(workDuration  + " min");
         tvBreakVal.setText(breakDuration + " min");
         tvPreview.setText("Work " + workDuration + " min → Break " + breakDuration + " min");
 
@@ -410,7 +504,6 @@ public class PomodoroActivity extends AppCompatActivity {
             int newWork  = sbWork.getProgress()  + 1;
             int newBreak = sbBreak.getProgress() + 1;
 
-            // Validation: 1–60 range already enforced by seekbar, just sanity check
             if (newWork < 1 || newWork > 60 || newBreak < 1 || newBreak > 60) {
                 Toast.makeText(this, "Duration must be between 1 and 60 minutes",
                         Toast.LENGTH_SHORT).show();
@@ -444,6 +537,7 @@ public class PomodoroActivity extends AppCompatActivity {
     }
 
     // ── Haptic vibration on session end ───────────────────────────────────────
+    @RequiresPermission(Manifest.permission.VIBRATE)
     private void vibrate() {
         try {
             Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
@@ -464,5 +558,6 @@ public class PomodoroActivity extends AppCompatActivity {
         super.onDestroy();
         if (countDownTimer != null) countDownTimer.cancel();
         if (timerListener  != null) timerRef.removeEventListener(timerListener);
+        focusTracker.stopSession();
     }
 }
